@@ -1,11 +1,18 @@
 import FormatDate from "../others/formatDate";
 import NextMeeting from "../others/nextMeeting";
 import TimeRemaining from "../others/timeRemaining";
+import { useRefresh } from "../others/refreshInfo";
+import { useEffect } from "react";
 
 function MeetingInfo() {
+  const { refreshTrigger } = useRefresh();
   const { getTimeRemaining } = TimeRemaining();
   const { formatDate } = FormatDate();
   const { nextMeeting } = NextMeeting();
+
+  useEffect(() => {
+    // Cette fonction vide est suffisante car NextMeeting() se chargera de rafraîchir les données
+  }, [refreshTrigger]);
 
   // fonction qui va permettre de retourner les inititiales de la personne qui a crée la réunion
   // elle prend en paramètre un nom complet
@@ -24,7 +31,7 @@ function MeetingInfo() {
   return (
     <div>
       {nextMeeting ? (
-        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 mt-4 flex flex-col md:flex-row md:items-center justify-between text-white w-full gap-6">
+        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-7 mt-5 flex flex-col md:flex-row md:items-center justify-between text-white w-full gap-6">
           {/* Partie Gauche */}
           <div className="flex flex-col items-start min-w-[100px]">
             <p className="text-sm">
@@ -51,7 +58,7 @@ function MeetingInfo() {
                 {getInitials(nextMeeting.creator_name || "")}
               </div>
               <span className="text-sm">
-                Créer par : {nextMeeting.creator_name}
+                Crée par : {nextMeeting.creator_name}
               </span>
             </div>
           </div>

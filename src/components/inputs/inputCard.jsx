@@ -1,8 +1,10 @@
 import { useId } from "react";
 
-function InputCard({ placeholder, value, onChange, label, icon: Icon }) {
+function InputCard({ placeholder, value, onChange, label, icon: Icon, type }) {
   const id = useId();
-  const isPassword = label.toLowerCase().includes("mot de passe");
+  const inputType =
+    type ||
+    (label.toLowerCase().includes("mot de passe") ? "password" : "text");
 
   return (
     <div className="flex flex-col">
@@ -11,7 +13,7 @@ function InputCard({ placeholder, value, onChange, label, icon: Icon }) {
         {label}
       </label>
       <input
-        type={isPassword ? "password" : "text"}
+        type={inputType}
         id={id}
         placeholder={placeholder}
         value={value}

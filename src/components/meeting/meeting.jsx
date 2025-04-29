@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MeetingFetch from "../../hook/meetingFetch";
 import MeetingInfo from "./meetingInfo";
 import MeetingAdd from "./meetingAdd";
 import ShowMeeting from "./showMeeting";
+import { useRefresh } from "../others/refreshInfo";
 
 function Meetings() {
-  const { error, loading } = MeetingFetch();
+  const { refreshTrigger } = useRefresh();
+  const { error, loading, fetchData } = MeetingFetch();
   const [selectedSort, setSelectedSort] = useState("Tous");
   const options = ["Tous", "En cours", "À venir", "Passé"];
+
+  useEffect(() => {
+    fetchData();
+  }, [refreshTrigger, fetchData]);
 
   if (loading) {
     return (
@@ -29,7 +35,7 @@ function Meetings() {
       <div className="flex flex-col lg:flex-row gap-5">
         <div className="flex flex-col items-start bg-emerald-400 rounded-lg shadow-lg px-4 py-8 w-full lg:ml-10 lg:max-w-5xl">
           <div className="flex flex-wrap items-center gap-4 text-white">
-            <span className="text-base font-semibold">Trié par</span>
+            <span className="text-base font-semibold">Trier par</span>
             <div className="flex flex-wrap gap-2">
               {options.map((option) => (
                 <button
@@ -55,7 +61,7 @@ function Meetings() {
           <MeetingAdd />
         </div>
       </div>
-      <div className="mt-5 max-w-5xl ml-10">
+      <div className="mt-5 max-w-5xl lg:ml-10">
         <ShowMeeting selectedSort={selectedSort} />
       </div>
     </div>

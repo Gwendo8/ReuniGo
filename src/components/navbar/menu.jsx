@@ -68,7 +68,7 @@ const SlideMenu = ({ userData, toggleOpen, boxVariant }) => {
         <FaCalendarAlt size={20} /> Réunion
       </Link>
       <Link
-        to="/about"
+        to="/admin"
         onClick={() => toggleOpen()}
         className="flex items-center text-gray-800 hover:text-[#00ADE1] text-lg py-4 gap-4"
       >

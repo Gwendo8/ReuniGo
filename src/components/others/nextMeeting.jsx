@@ -1,12 +1,30 @@
 import MeetingFetch from "../../hook/meetingFetch";
+import getStatus from "./getStatus";
+import { useRefresh } from "./refreshInfo";
+import { useEffect } from "react";
 
 function NextMeeting() {
-  const { meeting } = MeetingFetch();
+  const { refreshTrigger } = useRefresh();
+  const { meeting, fetchData } = MeetingFetch();
+
+  useEffect(() => {
+    fetchData();
+  }, [refreshTrigger, fetchData]);
+
+  // Ici je cherche la réunion qui est en cours
+  // je fais un tableau avec toutes les réunions qui sont en cours
+  const currentMeeting = meeting.find((m) => getStatus(m) === "En cours");
+
+  // Si il y a une réunion en cours, je la retourne
+  if (currentMeeting) {
+    return { nextMeeting: currentMeeting };
+  }
+  // Sinon je cherche la réunion qui est à venir
   // Ici je trie les réunions pour savoir quelle sera la prochaine à venir
   const upcomingMeetings = meeting
-    // D'abord je filtre les réunions pour ne garder que celles qui sont dans le futur comparé à la date actuelle
-    // je transforme la date de la réunion en objet Date pour pouvoir la comparer avec la date actuelle
-    .filter((m) => new Date(m.meeting_date) > new Date())
+    // je filtre les réunions pour ne garder que celles qui sont à venir
+    // et je fais un tableau avec toutes les réunions qui sont à venir
+    .filter((m) => getStatus(m) === "À venir")
     // ensuite je trie les réunions par date croissante
     // je dis que si la réunion a est plus proche que la réunion b, alors je dois la mettre avant
     .sort((a, b) => new Date(a.meeting_date) - new Date(b.meeting_date));

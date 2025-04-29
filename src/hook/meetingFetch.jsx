@@ -1,39 +1,40 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 function MeetingFetch() {
   const [meeting, setMeeting] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userId = localStorage.getItem("id");
-        const response = await axios.get(
-          `http://localhost:8000/meetings?id=${userId}`
-        );
-        setMeeting(response.data);
-      } catch (error) {
-        if (error.response && error.response.data) {
-          if (error.response.status === 500) {
-            setError("Une erreur est survenue");
-          }
-        } else {
-          setError("Erreur serveur");
+  const fetchData = useCallback(async () => {
+    try {
+      const userId = localStorage.getItem("id");
+      const response = await axios.get(
+        `http://localhost:8000/meetings?id=${userId}`
+      );
+      setMeeting(response.data);
+    } catch (error) {
+      if (error.response && error.response.data) {
+        if (error.response.status === 500) {
+          setError("Une erreur est survenue");
         }
-      } finally {
-        setLoading(false);
+      } else {
+        setError("Erreur serveur");
       }
-    };
-
-    fetchData();
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return {
     meeting,
     loading,
     error,
+    fetchData,
   };
 }
 

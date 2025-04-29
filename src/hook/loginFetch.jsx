@@ -34,7 +34,7 @@ function LoginFetch() {
       // redirection par rapport au rôle
       if (role === "ADMIN") {
         navigate("/admin");
-      } else navigate("/");
+      } else navigate("/meeting");
     } catch (error) {
       // Vérifie si la réponse d'erreur contient des données
       if (error.response && error.response.data) {

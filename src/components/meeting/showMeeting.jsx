@@ -1,60 +1,74 @@
+import { useState, useEffect } from "react";
 import MeetingFetch from "../../hook/meetingFetch";
 import FormatDate from "../others/formatDate";
 import borderColorMeeting from "../others/borderColorMeeting";
+import getStatus from "../others/getStatus";
+import { useRefresh } from "../others/refreshInfo";
+import ShowInfoSuppMeeting from "./showInfoSuppMeeting";
+import DeleteMeetingFetch from "../../hook/deleteMeetingFetch";
+import { Trash2 } from "lucide-react";
 
 function ShowMeeting({ selectedSort }) {
-  const { meeting, loading, error } = MeetingFetch();
+  const { refreshTrigger } = useRefresh();
+  const { meeting, loading, error, fetchData } = MeetingFetch();
   const { formatDate } = FormatDate();
-  const now = new Date();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+  const { deleteMeeting } = DeleteMeetingFetch();
 
-  const getStatus = (meeting) => {
-    // la je déclare une variable start avec la date de la réunion
-    const start = new Date(meeting);
-    // ensuite je délcare une variable end qui est la fin de la réunion
-    const end = new Date(start);
-    // j'ajoute a cette variable 15 minutes en + de la date de la réunion
-    end.setMinutes(start.getMinutes() + 15);
-
-    if (start > now) return "À venir";
-    if (start <= now && end >= now) return "En cours";
-    return "Passé";
+  const handleDeleteMeeting = (id) => {
+    const confirm = window.confirm(
+      "Êtes-vous sûr de vouloir supprimer cette réunion ?"
+    );
+    if (!confirm) return;
+    deleteMeeting(id, () => {
+      console.log("Réunion supprimé et refresh déclenché");
+    });
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [refreshTrigger, fetchData]);
+
   // Grouper les réunions par statut
-  // la je créer un objet qui va contenir les réunions
-  // en fonction de leur statut
   const groupedMeetings = {
-    // je déclare les 3 statuts
-    // et je les initialise avec un tableau vide
     "À venir": [],
     "En cours": [],
     Passé: [],
   };
-  // la je parcours chaque réunion du tableau meeting
+
   meeting.forEach((m) => {
-    // pour chaque réunion je vais chercher son statut avec la fonction getStatus qui prend en paramètre la date de la réunion
-    // cette fonction retourne un statut 'À venir', 'En cours' ou 'Passé'
-    const status = getStatus(m.meeting_date);
-    // du moment où on connait le status de la réunion on l'ajoute dans le tableau correspondant
+    const status = getStatus(m);
     groupedMeetings[status].push(m);
   });
-  // La je définis les couleurs de fond pour chaque statut
+
   const statusColors = {
     "À venir": "bg-orange-300",
     "En cours": "bg-green-300",
     Passé: "bg-red-300",
   };
 
-  // la définis la taille de la carte en fonction du statut
+  // Modified for responsiveness: w-full on small screens, w-1/2 on large screens and up
   const statusWidth = {
-    "À venir": "w-1/2",
-    "En cours": "w-1/2",
-    Passé: "w-2/2",
+    "À venir": "w-full lg:w-1/2",
+    "En cours": "w-full lg:w-1/2",
+    Passé: "w-full", // w-2/2 is equivalent to w-full
   };
-  // La je détermine quel section on affiche
+
   const sectionsToRender =
-    // si l'utilisateur a choisi "Tous" on affiche les 3 sections
-    // sinon on affiche seulement la section correspondante au statut choisi
     selectedSort === "Tous" ? ["À venir", "En cours", "Passé"] : [selectedSort];
+
+  // Fonction pour ouvrir la pop-up
+  const openPopup = (meetingId) => {
+    setSelectedMeetingId(meetingId);
+    setIsPopupOpen(true);
+  };
+
+  // Fonction pour fermer la pop-up
+  const closePopup = () => {
+    setIsPopupOpen(false);
+    setSelectedMeetingId(null);
+  };
 
   return (
     <div className="flex flex-col">
@@ -70,7 +84,10 @@ function ShowMeeting({ selectedSort }) {
                 <h2 className={`${statusColors[status]} px-5 py-1 rounded-lg`}>
                   {status}
                 </h2>
-                <span className="text-emerald-700 text-sm font-semibold">
+                <span
+                  className="text-emerald-700 text-sm font-semibold cursor-pointer"
+                  onClick={openPopup} // Ouvre la pop-up au clic
+                >
                   Voir plus
                 </span>
               </div>
@@ -78,10 +95,23 @@ function ShowMeeting({ selectedSort }) {
               {groupedMeetings[status].map((meet) => (
                 <div
                   key={meet.meeting_name}
-                  className={`bg-white shadow-md rounded-lg p-4 mb-4 flex flex-col gap-2 ${
+                  className={`bg-white shadow-md rounded-lg p-4 mb-4 flex flex-col gap-2 group relative ${
                     statusWidth[status]
-                  } border-l-4 ${borderColorMeeting(meet.meeting_date)}`}
+                  } ${borderColorMeeting(
+                    meet.meeting_date,
+                    meet.meeting_time
+                  )}`}
                 >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMeeting(meet.id);
+                    }}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity transform hover:scale-110 duration-200"
+                    title="Supprimer"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                   <p className="text-lg text-emerald-800 font-medium">
                     {meet.meeting_name}
                   </p>
@@ -95,10 +125,22 @@ function ShowMeeting({ selectedSort }) {
                   <p className="text-md text-black font-base">
                     🕒 {formatDate(meet.meeting_date).formattedTime}
                   </p>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full">
+                      ⏱️
+                    </span>
+                    <span>
+                      Durée :{" "}
+                      <span className="font-medium text-gray-800">
+                        {meet.meeting_time} min
+                      </span>
+                    </span>
+                  </div>
                   <div className="flex justify-end">
                     <button
                       className="bg-transparent hover:bg-emerald-600 border border-emerald-700 rounded-md p-2 text-emerald-700
                        hover:text-white font-medium transition duration-300 w-fit"
+                      onClick={() => openPopup(meet.id)}
                     >
                       Plus de détails
                     </button>
@@ -108,6 +150,14 @@ function ShowMeeting({ selectedSort }) {
             </div>
           ) : null
         )
+      )}
+
+      {/* Pop-up ShowInfoSuppMeeting */}
+      {isPopupOpen && selectedMeetingId && (
+        <ShowInfoSuppMeeting
+          closePopup={closePopup}
+          meetingId={selectedMeetingId}
+        />
       )}
     </div>
   );

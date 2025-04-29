@@ -269,13 +269,31 @@ app.put("/admin-update/:id", async (req, res) => {
 
 // supprimer un utilisateur
 app.delete("/admin-delete/:id", async (req, res) => {
-  const id = req.params.id;
+  const sgid = req.params.id;
   try {
-    const result = await pool.query(
-      `DELETE FROM public."Users" WHERE sgid = $1 RETURNING *`,
-      [id]
+    // Récupérer l'id de l'utilisateur à partir du sgid
+    const userResult = await pool.query(
+      `SELECT id FROM public."Users" WHERE sgid = $1`,
+      [sgid]
     );
-    if (result.rowCount === 0) {
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+    const userId = userResult.rows[0].id;
+    // On supprime d'abord les dépendances dans UsersMeeting
+    await pool.query(`DELETE FROM public."UsersMeeting" WHERE iduser = $1`, [
+      userId,
+    ]);
+    // Ensuite on supprime les dépendances dans UsersTeam
+    await pool.query(`DELETE FROM public."UsersTeam" WHERE user_id = $1`, [
+      userId,
+    ]);
+    // Puis on supprime l'utilisateur
+    const deleteResult = await pool.query(
+      `DELETE FROM public."Users" WHERE id = $1 RETURNING *`,
+      [userId]
+    );
+    if (deleteResult.rowCount === 0) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
     res.status(200).json({ message: "Utilisateur supprimé avec succès" });
@@ -288,16 +306,17 @@ app.delete("/admin-delete/:id", async (req, res) => {
 ////////////////// REUNIONS
 
 // récupéreation des réunions
-
 app.get("/meetings", async (req, res) => {
   const userId = req.query.id;
   try {
     const result = await pool.query(
       `
       SELECT 
+        m.id,
         m.name AS meeting_name,
         m.lieu AS meeting_lieu,
         m.date AS meeting_date,
+        m.time AS meeting_time,
         creator.lastname || ' ' || creator.firstname AS creator_name,  
         STRING_AGG(participant.lastname || ' ' || participant.firstname, ', ') AS participants_names
       FROM public."Meetings" m
@@ -317,6 +336,263 @@ app.get("/meetings", async (req, res) => {
   } catch (error) {
     console.error("Erreur lors de la récupération des réunions", error);
     res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// récupération des utilisateurs pour la réunion
+app.get("/users-meeting/:id", async (req, res) => {
+  const meetingId = req.params.id;
+  console.log("ID de la réunion reçu : ", meetingId);
+  try {
+    const result = await pool.query(
+      `SELECT m.id AS usersmeeting_id,
+        json_agg(
+          json_build_object(
+            'id', u.id,
+            'firstname', u.firstname,
+            'lastname', u.lastname,
+            'sgid', u.sgid  -- <<=== AJOUT ici
+          )
+        ) AS participants
+      FROM public."UsersMeeting" ur 
+      JOIN public."Users" u ON ur.iduser = u.id
+      JOIN public."Meetings" m ON ur.idmeeting = m.id
+      WHERE m.id = $1
+      GROUP BY m.id;`,
+      [meetingId]
+    );
+    res.json(result.rows);
+    console.log(result.rows);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.get("/usersmeeting", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, firstname, lastname FROM public."Users"`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ajout d'une réunion
+app.post("/add-meeting", async (req, res) => {
+  const {
+    meeting_name,
+    meeting_lieu,
+    meeting_date,
+    meeting_time,
+    participants,
+    teams,
+    createdby,
+  } = req.body;
+
+  // la je vérifie si tous les champs requis sont remplis
+  if (
+    !meeting_name ||
+    !meeting_lieu ||
+    !meeting_date ||
+    !meeting_time ||
+    // et si au moins un participant ou une équipe est sélectionné
+    ((!participants || participants.length === 0) &&
+      (!teams || teams.length === 0)) ||
+    !createdby ||
+    !createdby.firstname ||
+    !createdby.lastname
+  ) {
+    return res.status(400).json({
+      message:
+        "Tous les champs requis (nom, lieu, date, heure, créateur) doivent être remplis, et au moins un participant ou une équipe doit être sélectionné.",
+    });
+  }
+
+  try {
+    // Trouver l'ID du créateur par rapport à son nom et prénom
+    const creatorRes = await pool.query(
+      `SELECT id FROM public."Users" WHERE firstname = $1 AND lastname = $2`,
+      [createdby.firstname, createdby.lastname]
+    );
+
+    if (creatorRes.rows.length === 0) {
+      return res.status(404).json({ message: "Créateur non trouvé" });
+    }
+
+    // du coup si un créateur est trouvé on récupère son id on à le stock dans cette variable
+    const creatorId = creatorRes.rows[0].id;
+    // Insértion de la réunion dans la table "Meetings"
+    const result = await pool.query(
+      `INSERT INTO public."Meetings"("name", "lieu", "date", "time", "createdby")
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING "id"`,
+      // la je renvoie l'id de la réunion
+      // pour pouvoir l'utiliser après pour ajouter les participants et les équipes
+      [meeting_name, meeting_lieu, meeting_date, meeting_time, creatorId]
+    );
+
+    // la du coup je récupère l'id de la réunion
+    const meetingId = result.rows[0].id;
+
+    // la je créer un ensemble avec un Set pour stocker les ID des participants
+    const uniqueParticipantIds = new Set();
+
+    // si des participants sont fournis
+    if (participants && participants.length > 0) {
+      // je parcours le tableau des participants
+      for (const participant of participants) {
+        // et je fais une requête pour trouver l'id de chaque participant
+        // en fonction de son nom et prénom
+        const userRes = await pool.query(
+          `SELECT id FROM public."Users" WHERE firstname = $1 AND lastname = $2`,
+          [participant.firstname, participant.lastname]
+        );
+
+        // si l'utilisateur est trouvé
+        if (userRes.rows.length > 0) {
+          // je l'ajoute à l'ensemble avec son id
+          uniqueParticipantIds.add(userRes.rows[0].id);
+        } else {
+          // sinon j'envoie un avertissement dans la console
+          console.warn(
+            `Participant non trouvé: ${participant.firstname} ${participant.lastname}`
+          );
+        }
+      }
+    }
+    // si des équipes sont fournies
+    if (teams && teams.length > 0) {
+      // je fais une requête pour trouver les membres de chaque équipe
+      // en utilisant l'id de l'équipe
+      // et je récupère tous les id des membres de l'équipe
+      // en utilisant la clause ANY pour vérifier si l'id de l'équipe est dans le tableau des équipes
+      const teamMembersRes = await pool.query(
+        `SELECT user_id FROM public."UsersTeam" WHERE team_id = ANY($1)`,
+        [teams]
+      );
+
+      // la je parcours le tableau des équipes
+      teamMembersRes.rows.forEach((row) => {
+        // et j'ajoute chaque membre de l'équipe à l'ensemble
+        // en utilisant son id
+        // et vu que je fais un Set il ne peut y'avoir aucun doublon
+        // du coup si un utilisateur est déjà membre d'une autre équipe il ne sera ajouté qu'une seule fois
+        uniqueParticipantIds.add(row.user_id);
+      });
+    }
+    // donc la je parcours tous les id qui sont stockés dans l'ensemble uniqueParticipantIds
+    for (const userId of uniqueParticipantIds) {
+      const existingEntry = await pool.query(
+        // et pour chaque id je vérifie si il existe déjà dans la table UsersMeeting
+        `SELECT 1 FROM public."UsersMeeting" WHERE idmeeting = $1 AND iduser = $2`,
+        [meetingId, userId]
+      );
+
+      // si il n'existe pas je l'ajoute
+      if (existingEntry.rows.length === 0) {
+        await pool.query(
+          `INSERT INTO public."UsersMeeting"("idmeeting", "iduser")
+               VALUES ($1, $2)`,
+          [meetingId, userId]
+        );
+      }
+    }
+    res.status(201).json({
+      message: "Réunion créée avec succès",
+      meetingId: meetingId,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la création de la réunion", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la création de la réunion" });
+  }
+});
+
+// Supprimer une réunion
+app.delete("/delete-meeting/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    // On supprimer d'abord les participants de la réunion
+    await pool.query(`DELETE FROM public."UsersMeeting" WHERE idmeeting = $1`, [
+      id,
+    ]);
+    // Ensuite on supprime la réunion elle-même
+    const result = await pool.query(
+      `DELETE FROM public."Meetings" WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Réunion non trouvée" });
+    }
+    res.status(200).json({ message: "Réunion supprimée avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de la réunion", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la suppression de la réunion" });
+  }
+});
+
+// Afficher les équipes
+app.get("/teams", async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT t.id AS team_id, 
+       t.name AS team_name, 
+       t.colors AS team_colors,
+       array_agg(u.firstname || ' ' || u.lastname) AS members_full_name,
+       leader.firstname || ' ' || leader.lastname AS leader_full_name
+       FROM public."Teams" t
+       LEFT JOIN public."UsersTeam" ut ON t.id = ut.team_id
+       LEFT JOIN public."Users" u ON ut.user_id = u.id
+       LEFT JOIN public."Users" leader ON t.leader_id = leader.id
+       GROUP BY t.id, t.name, leader.firstname, leader.lastname, t.colors
+       ORDER BY t.id;`);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des équipes", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Création d'une équipe
+app.post("/create-team", async (req, res) => {
+  console.log("Route /create-team atteinte");
+  console.log("Corps de la requête :", req.body);
+  const { teamName, members, colors, creatorId } = req.body;
+
+  // Validation des champs
+  if (!teamName || !members || !creatorId || !colors) {
+    return res.status(400).json({ message: "Tous les champs sont requis" });
+  }
+
+  try {
+    // Insertion du nom de l'équipe dans la table "Teams"
+    const newTeamResult = await pool.query(
+      `INSERT INTO public."Teams"("name", "leader_id", "colors") VALUES ($1, $2, $3) RETURNING "id"`,
+      [teamName, creatorId, colors]
+    );
+
+    const teamId = newTeamResult.rows[0].id;
+
+    // Ajouter les membres à la table "TeamMembers"
+    for (const memberId of members) {
+      await pool.query(
+        `INSERT INTO public."UsersTeam"("team_id", "user_id") VALUES ($1, $2)`,
+        [teamId, memberId]
+      );
+    }
+
+    res.status(201).json({ message: "Équipe créée avec succès", teamId });
+  } catch (error) {
+    console.error("Erreur lors de la création de l'équipe", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la création de l'équipe" });
   }
 });
 
