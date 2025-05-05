@@ -7,6 +7,7 @@ import { useRefresh } from "../others/refreshInfo";
 import ShowInfoSuppMeeting from "./showInfoSuppMeeting";
 import DeleteMeetingFetch from "../../hook/deleteMeetingFetch";
 import { Trash2 } from "lucide-react";
+import jwtDecode from "jwt-decode";
 
 function ShowMeeting({ selectedSort }) {
   const { refreshTrigger } = useRefresh();
@@ -15,6 +16,9 @@ function ShowMeeting({ selectedSort }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
   const { deleteMeeting } = DeleteMeetingFetch();
+  const token = localStorage.getItem("token");
+  const decodedToken = jwtDecode(token);
+  const roleUser = decodedToken.rolename;
 
   const handleDeleteMeeting = (id) => {
     const confirm = window.confirm(
@@ -102,16 +106,18 @@ function ShowMeeting({ selectedSort }) {
                     meet.meeting_time
                   )}`}
                 >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteMeeting(meet.id);
-                    }}
-                    className="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity transform hover:scale-110 duration-200"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  {roleUser === "ADMIN" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteMeeting(meet.id);
+                      }}
+                      className="text-gray-400 hover:text-red-500 transition-colors top-2 right-2 absolute"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
                   <p className="text-lg text-emerald-800 font-medium">
                     {meet.meeting_name}
                   </p>

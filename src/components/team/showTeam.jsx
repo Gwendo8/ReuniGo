@@ -1,10 +1,9 @@
-"use client";
-
 import { useState } from "react";
 import ShowTeamFetch from "../../hook/showTeamFetch";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
 import boxVariant from "../animation/boxVariant";
+import { Trash2 } from "lucide-react";
 import {
   FaUsers,
   FaTimes,
@@ -13,12 +12,33 @@ import {
   FaTimesCircle,
 } from "react-icons/fa";
 import SearchBar from "../others/searchBar";
+import UpdateInfoTeam from "./updateInfoTeam";
+import DeleteTeamFetch from "../../hook/deleteTeamFetch";
 
 function ShowTeam({ closePopup }) {
   const [isVisible, setIsVisible] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
+  const [selectedTeam, setSelectedTeam] = useState(null);
   const { teams, error, loading } = ShowTeamFetch();
+  const { deleteTeam } = DeleteTeamFetch();
+
+  const handleDeleteTeam = (id) => {
+    if (!id) {
+      console.error("ID d'équipe manquant");
+      return;
+    }
+
+    const confirm = window.confirm(
+      "Êtes-vous sûr de vouloir supprimer cette équipe ?"
+    );
+    if (!confirm) return;
+
+    deleteTeam(id, () => {
+      console.log("Équipe supprimée et refresh déclenché");
+      handleClose();
+    });
+  };
 
   const handleClose = () => {
     setIsVisible(false);
@@ -27,6 +47,14 @@ function ShowTeam({ closePopup }) {
         closePopup();
       }
     }, 300);
+  };
+
+  const handleViewDetails = (team) => {
+    setSelectedTeam(team);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedTeam(null);
   };
 
   // Fonction de recherche
@@ -122,8 +150,18 @@ function ShowTeam({ closePopup }) {
                   {filteredTeams.map((team) => (
                     <div
                       key={team.team_name}
-                      className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition duration-300"
+                      className="relative bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition duration-300"
                     >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTeam(team.team_id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition-colors top-2 right-2 absolute"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                       <div className="p-5">
                         <div className="flex items-center gap-3 mb-3">
                           <div
@@ -146,6 +184,7 @@ function ShowTeam({ closePopup }) {
 
                         <div className="mt-4 pt-3 border-t border-gray-100">
                           <button
+                            onClick={() => handleViewDetails(team)}
                             className="text-sm hover:underline font-medium flex items-center"
                             style={{ color: team.team_colors }}
                           >
@@ -176,6 +215,11 @@ function ShowTeam({ closePopup }) {
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* Popup des détails de l'équipe */}
+      {selectedTeam && (
+        <UpdateInfoTeam team={selectedTeam} closePopup={handleCloseDetails} />
       )}
     </AnimatePresence>
   );

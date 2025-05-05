@@ -596,6 +596,134 @@ app.post("/create-team", async (req, res) => {
   }
 });
 
+// Récupération des détails d'une équipe
+app.get("/teams/:id", async (req, res) => {
+  const teamId = req.params.id;
+  try {
+    const result = await pool.query(
+      `SELECT 
+        t.id AS team_id,
+        t.name AS team_name,
+        t.colors AS team_colors,
+        t.leader_id,
+        json_build_object(
+          'id', leader.id,
+          'firstname', leader.firstname,
+          'lastname', leader.lastname
+        ) AS leader,
+        json_agg(
+          json_build_object(
+            'id', u.id,
+            'firstname', u.firstname,
+            'lastname', u.lastname
+          )
+        ) AS members
+      FROM public."Teams" t
+      LEFT JOIN public."Users" leader ON t.leader_id = leader.id
+      LEFT JOIN public."UsersTeam" ut ON t.id = ut.team_id
+      LEFT JOIN public."Users" u ON ut.user_id = u.id
+      WHERE t.id = $1
+      GROUP BY t.id, leader.id, leader.firstname, leader.lastname`,
+      [teamId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Équipe non trouvée" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des détails de l'équipe",
+      error
+    );
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// Modification d'une équipe
+app.put("/update-team/:id", async (req, res) => {
+  const teamId = req.params.id;
+  const { teamName, members, colors, leaderId } = req.body;
+
+  try {
+    // La je vérifie si l'équipe existe
+    const teamExists = await pool.query(
+      `SELECT id FROM public."Teams" WHERE id = $1`,
+      [teamId]
+    );
+    if (teamExists.rows.length === 0) {
+      return res.status(404).json({ message: "Équipe non trouvée" });
+    }
+    // La je met à jour les informations de base de l'équipe
+    await pool.query(
+      `UPDATE public."Teams" 
+       SET name = $1, colors = $2, leader_id = $3 
+       WHERE id = $4`,
+      [teamName, colors, leaderId, teamId]
+    );
+    // Récupérer les membres actuels de l'équipe
+    const currentMembersResult = await pool.query(
+      `SELECT user_id FROM public."UsersTeam" WHERE team_id = $1`,
+      [teamId]
+    );
+    const currentMembers = currentMembersResult.rows.map((row) => row.user_id);
+    // La j'identifie les personnes à supprimer (ceux qui sont dans currentMembers mais pas dans members)
+    const membersToRemove = currentMembers.filter(
+      (id) => !members.includes(id)
+    );
+    // La j'identifie les personnes à ajouter (ceux qui sont dans members mais pas dans currentMembers)
+    const membersToAdd = members.filter((id) => !currentMembers.includes(id));
+    // La je supprime uniquement les membres qui ne sont plus dans la nouvelle liste
+    if (membersToRemove.length > 0) {
+      await pool.query(
+        `DELETE FROM public."UsersTeam" 
+         WHERE team_id = $1 AND user_id = ANY($2)`,
+        [teamId, membersToRemove]
+      );
+    }
+    // Puis j'ajoute uniquement les nouveaux membres
+    for (const memberId of membersToAdd) {
+      await pool.query(
+        `INSERT INTO public."UsersTeam"("team_id", "user_id") 
+         VALUES ($1, $2)`,
+        [teamId, memberId]
+      );
+    }
+    res.status(200).json({
+      message: "Équipe modifiée avec succès",
+      teamId: teamId,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la modification de l'équipe", error);
+    res.status(500).json({
+      message: "Erreur serveur lors de la modification de l'équipe",
+    });
+  }
+});
+
+// Suppression d'une équipe
+app.delete("/delete-team/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    await pool.query(`DELETE FROM public."UsersTeam" WHERE team_id = $1`, [id]);
+    const result = await pool.query(
+      `DELETE FROM public."Teams" WHERE id = $1 `,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Equipe non trouvée" });
+    }
+    res.status(200).json({ message: "Equipe supprimée avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'équipe", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la suppression de l'équipe" });
+  }
+});
+
 const PORT = 8000;
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);
