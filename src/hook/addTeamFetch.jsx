@@ -23,14 +23,12 @@ function AddTeamFetch() {
         setError("Erreur lors du chargement des utilisateurs.");
       }
     };
-
     fetchUsers();
   }, []);
 
   const handleCreateTeam = async (onSuccess) => {
     setLoading(true);
     setError("");
-
     if (!teamName.trim()) {
       setError("Le nom de l'équipe est requis.");
       setLoading(false);
@@ -41,10 +39,8 @@ function AddTeamFetch() {
       setLoading(false);
       return;
     }
-
     const currentToken = localStorage.getItem("token");
     let creatorId = null;
-
     if (currentToken) {
       try {
         const decodedToken = jwtDecode(currentToken);
@@ -60,7 +56,6 @@ function AddTeamFetch() {
       setLoading(false);
       return;
     }
-
     // Extraire les IDs des membres sélectionnés
     const memberIds = selectedMembers.map((member) => member.id);
     try {
@@ -92,7 +87,6 @@ function AddTeamFetch() {
       setLoading(false);
     }
   };
-
   return {
     teamName,
     setTeamName,

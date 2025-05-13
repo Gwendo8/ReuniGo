@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import AddMeetingFetch from "../../hook/addMeeting";
 import InputCard from "../inputs/inputCard";
@@ -161,9 +159,9 @@ function FormMeeting({ onSuccess }) {
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 transition duration-300 flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 transition duration-300"
                   >
-                    <FaTimesCircle /> Annuler
+                    Annuler
                   </button>
                   <button
                     type="submit"

@@ -342,29 +342,58 @@ app.get("/meetings", async (req, res) => {
 // récupération des utilisateurs pour la réunion
 app.get("/users-meeting/:id", async (req, res) => {
   const meetingId = req.params.id;
-  console.log("ID de la réunion reçu : ", meetingId);
   try {
     const result = await pool.query(
       `SELECT m.id AS usersmeeting_id,
-        json_agg(
-          json_build_object(
-            'id', u.id,
-            'firstname', u.firstname,
-            'lastname', u.lastname,
-            'sgid', u.sgid  -- <<=== AJOUT ici
-          )
-        ) AS participants
+        u.id,
+        u.firstname,
+        u.lastname,
+        u.sgid,
+        ur.is_present AS present
       FROM public."UsersMeeting" ur 
       JOIN public."Users" u ON ur.iduser = u.id
       JOIN public."Meetings" m ON ur.idmeeting = m.id
-      WHERE m.id = $1
-      GROUP BY m.id;`,
+      WHERE m.id = $1;`,
       [meetingId]
     );
-    res.json(result.rows);
-    console.log(result.rows);
+    const participants = result.rows.map((row) => ({
+      id: row.id,
+      firstname: row.firstname,
+      lastname: row.lastname,
+      sgid: row.sgid,
+      present: row.present,
+    }));
+
+    res.json([{ usersmeeting_id: meetingId, participants }]);
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+// ici une route patch car la on ne va modifier que la présence d'un utilisateur
+// le put sert quand on doit tout modifier
+app.patch("/users-meeting/:meetingId/:userId", async (req, res) => {
+  const { meetingId, userId } = req.params;
+  const { is_present } = req.body;
+  try {
+    const updateResult = await pool.query(
+      `UPDATE public."UsersMeeting" 
+       SET is_present = $1 
+       WHERE idmeeting = $2 AND iduser = $3 
+       RETURNING *;`,
+      [is_present, meetingId, userId]
+    );
+    if (updateResult.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ error: "Utilisateur ou réunion introuvable." });
+    }
+    res.json({
+      message: "Statut de présence mis à jour.",
+      data: updateResult.rows[0],
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de la présence", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
@@ -544,13 +573,14 @@ app.get("/teams", async (req, res) => {
     const result = await pool.query(`SELECT t.id AS team_id, 
        t.name AS team_name, 
        t.colors AS team_colors,
+       t.leader_id AS leader_id,
        array_agg(u.firstname || ' ' || u.lastname) AS members_full_name,
        leader.firstname || ' ' || leader.lastname AS leader_full_name
        FROM public."Teams" t
        LEFT JOIN public."UsersTeam" ut ON t.id = ut.team_id
        LEFT JOIN public."Users" u ON ut.user_id = u.id
        LEFT JOIN public."Users" leader ON t.leader_id = leader.id
-       GROUP BY t.id, t.name, leader.firstname, leader.lastname, t.colors
+       GROUP BY t.id, t.name, t.leader_id, leader.firstname, leader.lastname, t.colors
        ORDER BY t.id;`);
     res.status(200).json(result.rows);
   } catch (error) {
@@ -564,21 +594,17 @@ app.post("/create-team", async (req, res) => {
   console.log("Route /create-team atteinte");
   console.log("Corps de la requête :", req.body);
   const { teamName, members, colors, creatorId } = req.body;
-
   // Validation des champs
   if (!teamName || !members || !creatorId || !colors) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
-
   try {
     // Insertion du nom de l'équipe dans la table "Teams"
     const newTeamResult = await pool.query(
       `INSERT INTO public."Teams"("name", "leader_id", "colors") VALUES ($1, $2, $3) RETURNING "id"`,
       [teamName, creatorId, colors]
     );
-
     const teamId = newTeamResult.rows[0].id;
-
     // Ajouter les membres à la table "TeamMembers"
     for (const memberId of members) {
       await pool.query(
@@ -586,7 +612,6 @@ app.post("/create-team", async (req, res) => {
         [teamId, memberId]
       );
     }
-
     res.status(201).json({ message: "Équipe créée avec succès", teamId });
   } catch (error) {
     console.error("Erreur lors de la création de l'équipe", error);
@@ -606,11 +631,7 @@ app.get("/teams/:id", async (req, res) => {
         t.name AS team_name,
         t.colors AS team_colors,
         t.leader_id,
-        json_build_object(
-          'id', leader.id,
-          'firstname', leader.firstname,
-          'lastname', leader.lastname
-        ) AS leader,
+        CONCAT(leader.firstname, ' ', leader.lastname) AS leadername,
         json_agg(
           json_build_object(
             'id', u.id,
@@ -632,6 +653,7 @@ app.get("/teams/:id", async (req, res) => {
     }
 
     res.json(result.rows[0]);
+    console.log("Équipe récupérée avec succès : ", result.rows[0]);
   } catch (error) {
     console.error(
       "Erreur lors de la récupération des détails de l'équipe",
@@ -645,50 +667,86 @@ app.get("/teams/:id", async (req, res) => {
 app.put("/update-team/:id", async (req, res) => {
   const teamId = req.params.id;
   const { teamName, members, colors, leaderId } = req.body;
-
   try {
-    // La je vérifie si l'équipe existe
-    const teamExists = await pool.query(
-      `SELECT id FROM public."Teams" WHERE id = $1`,
+    // La je récupère les informations actuelle de l'équipe
+    const teamResult = await pool.query(
+      `SELECT * FROM public."Teams" WHERE id = $1`,
       [teamId]
     );
-    if (teamExists.rows.length === 0) {
+    // La vérifie si l'équipe existe
+    if (teamResult.rows.length === 0) {
       return res.status(404).json({ message: "Équipe non trouvée" });
     }
-    // La je met à jour les informations de base de l'équipe
+    // existingTeam contient les informations de l'équipe existante
+    const existingTeam = teamResult.rows[0];
+    // Utilisation des valeurs existantes si aucune nouvelle valeur n'est fournie
+    // la par exemple soit on envoie le nouveau nom soit on garde le nom de base
+    const updatedName = teamName || existingTeam.name;
+    const updatedColors = colors || existingTeam.colors;
+    const updatedLeaderId = leaderId ? leaderId : existingTeam.leader_id;
+    // Mise à jour des informations de l'équipe
     await pool.query(
       `UPDATE public."Teams" 
        SET name = $1, colors = $2, leader_id = $3 
        WHERE id = $4`,
-      [teamName, colors, leaderId, teamId]
+      [updatedName, updatedColors, updatedLeaderId, teamId]
     );
-    // Récupérer les membres actuels de l'équipe
-    const currentMembersResult = await pool.query(
-      `SELECT user_id FROM public."UsersTeam" WHERE team_id = $1`,
-      [teamId]
-    );
-    const currentMembers = currentMembersResult.rows.map((row) => row.user_id);
-    // La j'identifie les personnes à supprimer (ceux qui sont dans currentMembers mais pas dans members)
-    const membersToRemove = currentMembers.filter(
-      (id) => !members.includes(id)
-    );
-    // La j'identifie les personnes à ajouter (ceux qui sont dans members mais pas dans currentMembers)
-    const membersToAdd = members.filter((id) => !currentMembers.includes(id));
-    // La je supprime uniquement les membres qui ne sont plus dans la nouvelle liste
-    if (membersToRemove.length > 0) {
-      await pool.query(
-        `DELETE FROM public."UsersTeam" 
-         WHERE team_id = $1 AND user_id = ANY($2)`,
-        [teamId, membersToRemove]
+    // Si il y'a des membres
+    if (members) {
+      // la je parcours chaque membre
+      const memberIds = members.map((member) => {
+        // si le type est un objet avec le champ id
+        if (typeof member === "object" && member.id) {
+          // je renvoie l'id
+          return member.id;
+        }
+        // sinon je renvoie la valeur directement
+        return member;
+      });
+      // La je récupère les membres actuels de l'équipe
+      const currentMembersResult = await pool.query(
+        `SELECT user_id FROM public."UsersTeam" WHERE team_id = $1`,
+        [teamId]
       );
-    }
-    // Puis j'ajoute uniquement les nouveaux membres
-    for (const memberId of membersToAdd) {
-      await pool.query(
-        `INSERT INTO public."UsersTeam"("team_id", "user_id") 
-         VALUES ($1, $2)`,
-        [teamId, memberId]
+      // dans currentMembers je tranforme les résultats pour obtenir un tableau d'id
+      // je transforme le tableau d'objet en un tableau d'id
+      const currentMembers = currentMembersResult.rows.map(
+        (row) => row.user_id
       );
+      // Méthode pour supprimer les membres d'une équipe
+      const membersToRemove = currentMembers.filter(
+        // pour chaque id je vérifie si il n'est pas présent dans la nouvelle liste de membre (memberIds)
+        // si ce membre n'est plus dans la nouvelle liste, je le garde dans membersToRemove
+        (id) => !memberIds.includes(id)
+      );
+      // Méthode pour ajouter des membres à une équipe
+      const membersToAdd = memberIds.filter(
+        // pour chaque id je vérifie si il n'est pas présent dans la liste des membres actuels (currentMembers)
+        // si ce membre n'est pas dans la liste des membres actuels, je le garde dans membersToAdd
+        (id) => !currentMembers.includes(id)
+      );
+      // La on supprime uniquement les membres qui ne sont plus dans la nouvelle liste
+      if (membersToRemove.length > 0) {
+        await pool.query(
+          `DELETE FROM public."UsersTeam" 
+           WHERE team_id = $1 AND user_id = ANY($2::bigint[])`, // ANY permet de vérifier si user_id correspond à l'une des valeurs du tableau
+          // et $2::bigint[] permet de convertir la liste des membres en tableau d'entier
+          [teamId, membersToRemove]
+        );
+      }
+      // La on ajoute uniquement les membres qui ne sont pas déjà dans la liste des membres actuels
+      if (membersToAdd.length > 0) {
+        const insertPromises = membersToAdd.map((memberId) =>
+          pool.query(
+            `INSERT INTO public."UsersTeam"("team_id", "user_id") 
+             VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            // ON CONFLICT DO NOTHING permet d'éviter les doublons donc si un utilisateur est déja dans l'équipe on ignore l'insertion
+            [teamId, memberId]
+          )
+        );
+        // permet d'attendre que toutes les insertions soient terminées
+        await Promise.all(insertPromises);
+      }
     }
     res.status(200).json({
       message: "Équipe modifiée avec succès",

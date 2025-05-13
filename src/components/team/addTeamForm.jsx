@@ -103,7 +103,6 @@ function TeamCreationForm({ onSuccess, closePopup }) {
                     variant="outlined"
                   />
                 </div>
-
                 {/* Membres */}
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <label className="flex items-center text-lg font-medium text-gray-700 mb-2">

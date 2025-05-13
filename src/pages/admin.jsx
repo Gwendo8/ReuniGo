@@ -24,11 +24,17 @@ function Admin() {
         className="text-4xl lg:text-5xl text-center text-blue-700 mb-10 mt-12"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.5 }}
+        transition={{ duration: 0.7 }}
       >
         👥 Utilisateurs de l'application
       </motion.h1>
-      <UserInfo />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7 }}
+      >
+        <UserInfo />
+      </motion.div>
     </div>
   );
 }

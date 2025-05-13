@@ -1,22 +1,83 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 /* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
+import { FaSave } from "react-icons/fa";
 import boxVariant from "../animation/boxVariant";
-import { FaTimes, FaUsers, FaUser } from "react-icons/fa";
-import { Input } from "@mui/material";
-import ShowInfosTeamFetch from "../../hook/showInfosTeamFetch";
+import UpdateTeamFetch from "../../hook/updateTeamFetch";
+import ModalHeader from "./modalHeader";
+import TeamGeneralInfo from "./teamGeneralInfo";
+import TeamMembersList from "./teamMembersList";
+import AddTeamMembers from "./addTeamMembers";
+import LoadingButton from "../others/loadingButton";
 
 function UpdateInfoTeam({ team, closePopup }) {
   const [isVisible, setIsVisible] = useState(true);
-  const { error, loading, infoTeam, showInfoTeam } = ShowInfosTeamFetch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddMembers, setShowAddMembers] = useState(false);
 
-  useEffect(() => {
-    if (team && team.team_id) {
-      showInfoTeam(team.team_id);
+  const colorPalette = [
+    "#4F46E5",
+    "#0EA5E9",
+    "#10B981",
+    "#F59E0B",
+    "#EF4444",
+    "#8B5CF6",
+    "#EC4899",
+    "#6366F1",
+  ];
+
+  const {
+    updateTeam,
+    leaderId,
+    localTeamName,
+    setLocalTeamName,
+    localColors,
+    setLocalColors,
+    localMembers,
+    setLocalMembers,
+    users,
+    error,
+    loading,
+  } = UpdateTeamFetch({ team });
+
+  const handleUpdate = () => {
+    if (!team?.team_id) {
+      console.error("ID de l'équipe manquant");
+      return;
     }
-  }, [team, showInfoTeam]);
+    updateTeam(
+      team.team_id,
+      localTeamName,
+      localColors,
+      leaderId,
+      localMembers
+    );
+    handleClose();
+  };
+
+  const handleRemoveMember = (memberId) => {
+    const updatedMembers = localMembers.filter(
+      (member) => member.id !== memberId
+    );
+    setLocalMembers(updatedMembers);
+  };
+
+  const handleAddMember = (user) => {
+    const isAlreadyMember = localMembers.some(
+      (member) => member.id === user.id
+    );
+
+    if (!isAlreadyMember) {
+      setLocalMembers([...localMembers, user]);
+    }
+  };
+
+  const availableUsers = users.filter(
+    (user) =>
+      !localMembers.some((member) => member.id === user.id) &&
+      (user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastname.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   const handleClose = () => {
     setIsVisible(false);
@@ -43,90 +104,60 @@ function UpdateInfoTeam({ team, closePopup }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
           >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-400 p-6 text-white">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <FaUsers className="text-white" />
-                  Détails de l'équipe
-                </h2>
-                <button
-                  onClick={handleClose}
-                  className="bg-white/20 hover:bg-white/30 transition text-white rounded-full p-2"
-                  title="Fermer"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            </div>
+            <ModalHeader title="Détails de l'équipe" onClose={handleClose} />
 
-            {/* Contenu */}
             <div className="p-6 overflow-y-auto flex-1">
-              {loading && (
-                <p className="text-center text-gray-500">Chargement...</p>
-              )}
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                  {error}
-                </div>
-              )}
-              {infoTeam && !loading && !error && (
+              {team ? (
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                      Informations générales
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-gray-700">
-                      <p>
-                        <span className="font-medium text-gray-700">Nom :</span>{" "}
-                        {infoTeam.team_name}
-                      </p>
-                      <p>
-                        <span className="font-medium text-gray-700">
-                          Couleurs :
-                        </span>{" "}
-                        {infoTeam.team_colors}
-                      </p>
-                      <p>
-                        <span className="font-medium text-gray-700">
-                          Leader :
-                        </span>{" "}
-                        {infoTeam.leader?.firstname} {infoTeam.leader?.lastname}
-                      </p>
-                    </div>
-                  </div>
+                  <TeamGeneralInfo
+                    team={team}
+                    localTeamName={localTeamName}
+                    setLocalTeamName={setLocalTeamName}
+                    localColors={localColors}
+                    setLocalColors={setLocalColors}
+                    colorPalette={colorPalette}
+                  />
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                      Membres de l'équipe
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-gray-700">
-                      {infoTeam.members?.map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded"
-                        >
-                          <FaUser className="text-gray-500" />
-                          <span>
-                            {member.firstname} {member.lastname}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <AddTeamMembers
+                      showAddMembers={showAddMembers}
+                      setShowAddMembers={setShowAddMembers}
+                      availableUsers={availableUsers}
+                      onAddMember={handleAddMember}
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                    />
+
+                    <TeamMembersList
+                      members={localMembers}
+                      teamColor={localColors}
+                      onRemoveMember={handleRemoveMember}
+                    />
                   </div>
                 </div>
+              ) : (
+                <p className="text-gray-500 text-center">
+                  Aucune information sur cette équipe.
+                </p>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="bg-gray-50 p-4 border-t flex justify-end">
+            <div className="bg-gray-50 p-4 border-t flex justify-between items-center">
               <button
-                type="button"
                 onClick={handleClose}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 transition duration-300"
               >
-                Fermer
+                Annuler
               </button>
+
+              <LoadingButton
+                onClick={handleUpdate}
+                loading={loading}
+                loadingText="Enregistrement..."
+                icon={<FaSave className="w-5 h-5" />}
+              >
+                Enregistrer
+              </LoadingButton>
             </div>
           </motion.div>
         </motion.div>

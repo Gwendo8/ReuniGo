@@ -9,6 +9,7 @@ import Login from "./pages/login.jsx";
 import Register from "./pages/register.jsx";
 import { RefreshProvider } from "./components/others/refreshInfo.jsx";
 import Meeting from "./pages/meeting.jsx";
+import Contact from "./pages/contact.jsx";
 
 createRoot(document.getElementById("root")).render(
   <RefreshProvider>
@@ -20,6 +21,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/meeting" element={<Meeting />} />
+          <Route path="/contact" element={<Contact />} />
         </Routes>
       </Router>
     </StrictMode>

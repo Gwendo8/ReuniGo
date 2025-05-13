@@ -1,27 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ShowTeamFetch from "../../hook/showTeamFetch";
+import jwtDecode from "jwt-decode";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
 import boxVariant from "../animation/boxVariant";
-import { Trash2 } from "lucide-react";
-import {
-  FaUsers,
-  FaTimes,
-  FaUserFriends,
-  FaFilter,
-  FaTimesCircle,
-} from "react-icons/fa";
+import { FaUsers, FaTimes, FaFilter } from "react-icons/fa";
 import SearchBar from "../others/searchBar";
 import UpdateInfoTeam from "./updateInfoTeam";
 import DeleteTeamFetch from "../../hook/deleteTeamFetch";
+import ShowInfosTeamFetch from "../../hook/showInfosTeamFetch";
+import TeamCard from "./teamCard";
 
 function ShowTeam({ closePopup }) {
   const [isVisible, setIsVisible] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const { teams, error, loading } = ShowTeamFetch();
+  const { teams, loading } = ShowTeamFetch();
   const { deleteTeam } = DeleteTeamFetch();
+  const { infoTeam, showInfoTeam } = ShowInfosTeamFetch();
+  const [infoTeamVisible, setInfoTeamVisible] = useState(false);
+  const [filteredTeams, setFilteredTeams] = useState([]);
+
+  useEffect(() => {
+    // La je récupère l'id et le rôle de l'utilisateur connecté
+    const currentToken = localStorage.getItem("token");
+    if (currentToken) {
+      const decodedToken = jwtDecode(currentToken);
+      const userRole = decodedToken.rolename;
+      const userId = decodedToken.id;
+      // Puis je filtre les équipes en fonction du rôle
+      const visibleTeams =
+        userRole === "ADMIN"
+          ? teams
+          : teams.filter((team) => team.leader_id === userId);
+      setFilteredTeams(visibleTeams);
+    }
+  }, [teams]);
 
   const handleDeleteTeam = (id) => {
     if (!id) {
@@ -50,20 +64,20 @@ function ShowTeam({ closePopup }) {
   };
 
   const handleViewDetails = (team) => {
-    setSelectedTeam(team);
+    showInfoTeam(team.team_id);
+    setInfoTeamVisible(true);
   };
 
   const handleCloseDetails = () => {
-    setSelectedTeam(null);
+    setInfoTeamVisible(false);
   };
 
-  // Fonction de recherche
   const handleSearch = (value) => {
     setSearchTerm(value);
   };
 
-  // Filtrer et trier les équipes
-  const filteredTeams = teams
+  // Filtrer les équipes en fonction de la recherche et du tri
+  const searchedTeams = filteredTeams
     .filter((team) =>
       team.team_name.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -92,7 +106,6 @@ function ShowTeam({ closePopup }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
           >
-            {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-400 p-6 text-white">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -108,11 +121,10 @@ function ShowTeam({ closePopup }) {
                 </button>
               </div>
               <p className="text-blue-100 mt-1">
-                Consultez toutes les équipes disponibles
+                Consultez les équipes disponibles
               </p>
             </div>
 
-            {/* Barre de recherche et filtrage */}
             <div className="bg-gray-50 p-4 border-b">
               <div className="flex flex-col sm:flex-row gap-3 items-center">
                 <div className="flex-1">
@@ -135,91 +147,37 @@ function ShowTeam({ closePopup }) {
                 </div>
               </div>
             </div>
+
             <div className="p-6 overflow-y-auto flex-1">
-              {loading && (
+              {loading ? (
                 <p className="text-blue-500 text-center mb-4">
                   Chargement des équipes...
                 </p>
-              )}
-              {error && (
-                <p className="text-red-500 text-center mb-4">{error}</p>
-              )}
-
-              {!loading && !error && filteredTeams.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTeams.map((team) => (
-                    <div
-                      key={team.team_name}
-                      className="relative bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition duration-300"
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTeam(team.team_id);
-                        }}
-                        className="text-gray-400 hover:text-red-500 transition-colors top-2 right-2 absolute"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                      <div className="p-5">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-                            style={{ backgroundColor: team.team_colors }}
-                          >
-                            {team.team_name.charAt(0).toUpperCase()}
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            {team.team_name}
-                          </h3>
-                        </div>
-
-                        {team.members && (
-                          <div className="mt-3 flex items-center text-gray-500 text-sm">
-                            <FaUserFriends className="mr-2" />
-                            <span>{team.members.length} membres</span>
-                          </div>
-                        )}
-
-                        <div className="mt-4 pt-3 border-t border-gray-100">
-                          <button
-                            onClick={() => handleViewDetails(team)}
-                            className="text-sm hover:underline font-medium flex items-center"
-                            style={{ color: team.team_colors }}
-                          >
-                            Voir les détails →
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               ) : (
-                !loading && (
-                  <p className="text-gray-500 text-center">
-                    Aucune équipe disponible.
-                  </p>
-                )
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {searchedTeams.length > 0 ? (
+                    searchedTeams.map((team) => (
+                      <TeamCard
+                        key={team.team_id}
+                        team={team}
+                        onDelete={handleDeleteTeam}
+                        onViewDetails={handleViewDetails}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center">
+                      Aucune équipe disponible.
+                    </p>
+                  )}
+                </div>
               )}
-            </div>
-            {/* Footer */}
-            <div className="bg-gray-50 p-4 border-t flex justify-center">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="bg-gray-400 text-white px-6 py-3 rounded-lg shadow-md hover:bg-gray-500 transition duration-300 flex items-center gap-2"
-              >
-                <FaTimesCircle /> Fermer
-              </button>
             </div>
           </motion.div>
         </motion.div>
       )}
 
-      {/* Popup des détails de l'équipe */}
-      {selectedTeam && (
-        <UpdateInfoTeam team={selectedTeam} closePopup={handleCloseDetails} />
+      {infoTeamVisible && (
+        <UpdateInfoTeam team={infoTeam} closePopup={handleCloseDetails} />
       )}
     </AnimatePresence>
   );
