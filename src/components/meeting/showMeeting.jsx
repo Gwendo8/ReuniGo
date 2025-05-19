@@ -19,6 +19,8 @@ function ShowMeeting({ selectedSort }) {
   const token = localStorage.getItem("token");
   const decodedToken = jwtDecode(token);
   const roleUser = decodedToken.rolename;
+  const userId = decodedToken.id;
+
   // État pour suivre quelles sections sont développées
   const [expandedSections, setExpandedSections] = useState({
     "À venir": false,
@@ -129,7 +131,9 @@ function ShowMeeting({ selectedSort }) {
                       meet.meeting_time
                     )}`}
                   >
-                    {roleUser === "ADMIN" && (
+                    {(roleUser === "ADMIN" ||
+                      (roleUser === "MANAGER" &&
+                        userId === meet.creator_id)) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

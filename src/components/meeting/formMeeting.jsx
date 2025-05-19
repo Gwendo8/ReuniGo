@@ -15,6 +15,7 @@ import {
   FaSave,
   FaTimesCircle,
   FaTimes,
+  FaFileUpload,
 } from "react-icons/fa";
 
 function FormMeeting({ onSuccess }) {
@@ -32,6 +33,8 @@ function FormMeeting({ onSuccess }) {
     setSelectedParticipantsAndTeams,
     combinedOptions,
     handleCreateMeeting,
+    file,
+    setFile,
     error,
   } = AddMeetingFetch();
 
@@ -150,6 +153,21 @@ function FormMeeting({ onSuccess }) {
                       )}
                     />
                   </div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <h3 className="text-lg font-medium text-gray-700 mb-4 border-b pb-2">
+                    Fichiers
+                  </h3>
+                  <label className="text-md md:text-lg text-gray-800 mb-2 flex items-center">
+                    <FaFileUpload className="mr-2 text-blue-600" />
+                    Sélectionner des fichiers :
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    onChange={(e) => setFile([...e.target.files])}
+                  />
                 </div>
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}

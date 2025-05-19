@@ -9,8 +9,9 @@ function MeetingFetch() {
   const fetchData = useCallback(async () => {
     try {
       const userId = localStorage.getItem("id");
+      const role = localStorage.getItem("role"); // On récupère le rôle de l'utilisateur
       const response = await axios.get(
-        `http://localhost:8000/meetings?id=${userId}`
+        `http://localhost:8000/meetings?id=${userId}&role=${role}`
       );
       setMeeting(response.data);
     } catch (error) {

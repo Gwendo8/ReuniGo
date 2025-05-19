@@ -9,6 +9,7 @@ import {
   FaTimes,
   FaIdCard,
   FaCheck,
+  FaFileDownload,
 } from "react-icons/fa";
 import boxVariant from "../animation/boxVariant";
 import SearchBar from "../others/searchBar";
@@ -16,14 +17,25 @@ import jwtDecode from "jwt-decode";
 
 function ShowInfoSuppMeeting({ closePopup, meetingId }) {
   const { refreshTrigger } = useRefresh();
-  const { userMeeting, loading, error, showUserMeeting, updateUserPresence } =
-    UserMeetingFetch(meetingId);
+  const {
+    userMeeting,
+    files,
+    loading,
+    error,
+    showUserMeeting,
+    updateUserPresence,
+  } = UserMeetingFetch(meetingId);
   const [isVisible, setIsVisible] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const token = localStorage.getItem("token");
   const decodedToken = jwtDecode(token);
   const roleUser = decodedToken.rolename;
+  const userId = decodedToken.id;
+  // donc la je dis si userMeeting existe et qu'il contient au moins un élément
+  // userMeeting qui est un tableau d'objets des réunions et des participants de la réunion
+  // alors on essaie d'accéder à la propriété creatorId du premier élément
+  const meetingCreatorId = userMeeting?.[0]?.creatorId;
 
   useEffect(() => {
     showUserMeeting(meetingId);
@@ -132,43 +144,49 @@ function ShowInfoSuppMeeting({ closePopup, meetingId }) {
                     : "Aucun participant pour cette réunion."}
                 </p>
               ) : (
-                <ul className="space-y-3">
-                  {filteredParticipants?.map((participant, index) => {
-                    const colorClass = getColorFromName(
-                      `${participant.firstname}${participant.lastname}`
-                    );
-                    return (
-                      <li className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-gray-100 p-3 sm:p-4 rounded-xl shadow-sm hover:shadow-md transition duration-300">
-                        <div
-                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${colorClass} flex items-center justify-center text-white font-bold text-lg shrink-0`}
-                        >
-                          {participant.firstname.charAt(0)}
-                          {participant.lastname.charAt(0)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <span className="text-base sm:text-lg font-semibold text-gray-800 block truncate">
-                            {participant.firstname} {participant.lastname}
-                          </span>
-                          <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
-                            <FaIdCard className="mr-1 text-emerald-500 shrink-0" />
-                            <span className="truncate">
-                              {participant.sgid
-                                ? `SGID: ${participant.sgid}`
-                                : "SGID non renseigné"}
-                            </span>
+                <div className="flex flex-col gap-2">
+                  <h2 className="font-bold text-lg mb-2">
+                    Participants de la réunion :
+                  </h2>
+                  <ul className="space-y-3">
+                    {filteredParticipants?.map((participant, index) => {
+                      const colorClass = getColorFromName(
+                        `${participant.firstname}${participant.lastname}`
+                      );
+                      return (
+                        <li className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-gray-100 p-3 sm:p-4 rounded-xl shadow-sm hover:shadow-md transition duration-300">
+                          <div
+                            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${colorClass} flex items-center justify-center text-white font-bold text-lg shrink-0`}
+                          >
+                            {participant.firstname.charAt(0)}
+                            {participant.lastname.charAt(0)}
                           </div>
-                        </div>
-                        {roleUser === "ADMIN" && (
-                          <div className="flex items-center justify-end mt-2 sm:mt-0">
-                            <button
-                              onClick={() =>
-                                updateUserPresence(
-                                  participant.id,
-                                  !participant.present
-                                )
-                              }
-                              className={`
+
+                          <div className="flex-1 min-w-0">
+                            <span className="text-base sm:text-lg font-semibold text-gray-800 block truncate">
+                              {participant.firstname} {participant.lastname}
+                            </span>
+                            <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
+                              <FaIdCard className="mr-1 text-emerald-500 shrink-0" />
+                              <span className="truncate">
+                                {participant.sgid
+                                  ? `SGID: ${participant.sgid}`
+                                  : "SGID non renseigné"}
+                              </span>
+                            </div>
+                          </div>
+                          {(roleUser === "ADMIN" ||
+                            (roleUser === "MANAGER" &&
+                              userId === meetingCreatorId)) && (
+                            <div className="flex items-center justify-end mt-2 sm:mt-0">
+                              <button
+                                onClick={() =>
+                                  updateUserPresence(
+                                    participant.id,
+                                    !participant.present
+                                  )
+                                }
+                                className={`
                               flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300
                               ${
                                 participant.present
@@ -176,25 +194,61 @@ function ShowInfoSuppMeeting({ closePopup, meetingId }) {
                                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                               }
                             `}
+                              >
+                                {participant.present ? (
+                                  <>
+                                    <FaCheck className="text-emerald-500" />
+                                    <span>Présent</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaTimes className="text-gray-400" />
+                                    <span>Absent</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="p-4 overflow-y-auto flex-1">
+                    {files.length > 0 ? (
+                      <div className="mt-4">
+                        <h2 className="font-bold text-lg mb-2">
+                          Fichiers de la réunion :
+                        </h2>
+                        <ul className="space-y-2">
+                          {files.map((file) => (
+                            <li
+                              key={file.id}
+                              className="flex items-center justify-between bg-gray-100 p-2 rounded-lg"
                             >
-                              {participant.present ? (
-                                <>
-                                  <FaCheck className="text-emerald-500" />
-                                  <span>Présent</span>
-                                </>
-                              ) : (
-                                <>
-                                  <FaTimes className="text-gray-400" />
-                                  <span>Absent</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                              <span className="truncate">{file.name}</span>
+                              <a
+                                // encodeURI component permet d'encoder le nom du fichier pour éviter les problèmes de caractères spéciaux
+                                // le nom du fichier qui est passé avec le file.name
+                                // du coup ici sa envoie une requêtes GET à l'api de la route download-file pour télécharger le fichier
+                                href={`http://localhost:8000/download-file/${encodeURIComponent(
+                                  file.name
+                                )}`}
+                                // permet d'ouvrir le lien dans une nouvelle fenêtre
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-600 hover:text-emerald-800 flex items-center gap-2"
+                              >
+                                <FaFileDownload /> Télécharger
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">Aucun fichier associé</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
             {/* Footer avec bouton de fermeture */}

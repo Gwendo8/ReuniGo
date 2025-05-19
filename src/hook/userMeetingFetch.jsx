@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 function UserMeetingFetch(initialMeetingId = null) {
   const [userMeeting, setUserMeeting] = useState([]);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentMeetingId, setCurrentMeetingId] = useState(initialMeetingId);
@@ -19,14 +20,16 @@ function UserMeetingFetch(initialMeetingId = null) {
         return;
       }
       setLoading(true);
-
       try {
         console.log("ID de la réunion pour la requête : ", idToFetch);
-
         const response = await axios.get(
           `http://localhost:8000/users-meeting/${idToFetch}`
         );
+        const filesResponse = await axios.get(
+          `http://localhost:8000/files-meeting/${idToFetch}`
+        );
         setUserMeeting(response.data);
+        setFiles(filesResponse.data);
         setLoading(false);
         console.log("Réponse de l'api : ", response.data);
       } catch (error) {
@@ -102,6 +105,7 @@ function UserMeetingFetch(initialMeetingId = null) {
 
   return {
     userMeeting,
+    files,
     loading,
     error,
     showUserMeeting,

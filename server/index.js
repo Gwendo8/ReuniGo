@@ -4,6 +4,14 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import fileUpload from "express-fileupload";
+import path from "path";
+import fs from "fs";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const { Pool } = pkg;
 
@@ -12,6 +20,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  fileUpload({
+    createParentPath: true,
+  })
+);
 
 const pool = new Pool({
   host: "localhost",
@@ -308,30 +321,39 @@ app.delete("/admin-delete/:id", async (req, res) => {
 // récupéreation des réunions
 app.get("/meetings", async (req, res) => {
   const userId = req.query.id;
+  const role = req.query.role; // je récupère le rôle de l'utilisateur
   try {
-    const result = await pool.query(
-      `
+    let query = `
       SELECT 
         m.id,
         m.name AS meeting_name,
         m.lieu AS meeting_lieu,
         m.date AS meeting_date,
         m.time AS meeting_time,
+        m.createdby AS creator_id,
         creator.lastname || ' ' || creator.firstname AS creator_name,  
         STRING_AGG(participant.lastname || ' ' || participant.firstname, ', ') AS participants_names
       FROM public."Meetings" m
       JOIN public."Users" creator ON m.createdby = creator.id
       LEFT JOIN public."UsersMeeting" um ON um.idmeeting = m.id
       LEFT JOIN public."Users" participant ON um.iduser = participant.id
-      WHERE m.createdby = $1
-         OR m.id IN (
-           SELECT idmeeting FROM public."UsersMeeting" WHERE iduser = $2
-         )
+    `;
+    // Pour les utilisateurs et les managers, on filtre par userId
+    if (role !== "ADMIN") {
+      query += `
+        WHERE m.createdby = $1 
+        OR m.id IN (
+          SELECT idmeeting FROM public."UsersMeeting" WHERE iduser = $1
+        )
+      `;
+    }
+    query += `
       GROUP BY m.id, creator.lastname, creator.firstname;
-      `,
-      [userId, userId]
-    );
-
+    `;
+    // La on exécute la requête en y ajoutant des paramètres
+    // si le role de l'utilisateur est ADMIN alors on ne met pas de paramètres en mettant un tablea vide
+    // sinon on met l'id de l'utilisateur en paramètre
+    const result = await pool.query(query, role === "ADMIN" ? [] : [userId]);
     res.json(result.rows);
   } catch (error) {
     console.error("Erreur lors de la récupération des réunions", error);
@@ -349,13 +371,15 @@ app.get("/users-meeting/:id", async (req, res) => {
         u.firstname,
         u.lastname,
         u.sgid,
-        ur.is_present AS present
+        ur.is_present AS present,
+        m.createdby AS creator_id
       FROM public."UsersMeeting" ur 
       JOIN public."Users" u ON ur.iduser = u.id
       JOIN public."Meetings" m ON ur.idmeeting = m.id
       WHERE m.id = $1;`,
       [meetingId]
     );
+
     const participants = result.rows.map((row) => ({
       id: row.id,
       firstname: row.firstname,
@@ -364,12 +388,56 @@ app.get("/users-meeting/:id", async (req, res) => {
       present: row.present,
     }));
 
-    res.json([{ usersmeeting_id: meetingId, participants }]);
+    res.json([
+      {
+        usersmeeting_id: meetingId,
+        creatorId: result.rows[0]?.creator_id,
+        participants,
+      },
+    ]);
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
+// récupération des fichiers de la réunion
+app.get("/files-meeting/:id", async (req, res) => {
+  const meetingId = req.params.id;
+  try {
+    // ici je récupère que les fichiers de la réunion sélectionnée
+    const result = await pool.query(
+      `SELECT id, name, path FROM public."FilesMeeting" WHERE id_meeting = $1`,
+      [meetingId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des fichiers", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Route pour pouvoir télécharger les fichiers d'une réunion
+// filename est un paramètre dynamique pour le nom du fichier à télécharger
+app.get("/download-file/:filename", (req, res) => {
+  // ici je récupère le nom du fichier depuis l'url
+  const filename = req.params.filename;
+  // la je construit le chemin vers le fichier à télécharger
+  //__dirname est le répertoire courant du fichier dans lequel le script est exécuté
+  // uploads le dossier ou les fichiers sont stockés
+  // et filename le nom du fichier téléchargé
+  const filePath = path.join(__dirname, "uploads", filename);
+  console.log("Chemin du fichier :", filePath);
+  // fs.existsSync permet de vérifier si le fichier existe sur le serveur
+  // donc la je vérifie si le chemin du fichier existe
+  if (fs.existsSync(filePath)) {
+    // la j'envoie le fichier au client pour qu'il puisse le télécharger
+    res.download(filePath);
+  } else {
+    res.status(404).json({ error: "Fichier non trouvé" });
+  }
+});
+
 // ici une route patch car la on ne va modifier que la présence d'un utilisateur
 // le put sert quand on doit tout modifier
 app.patch("/users-meeting/:meetingId/:userId", async (req, res) => {
@@ -412,28 +480,25 @@ app.get("/usersmeeting", async (req, res) => {
 
 // ajout d'une réunion
 app.post("/add-meeting", async (req, res) => {
-  const {
-    meeting_name,
-    meeting_lieu,
-    meeting_date,
-    meeting_time,
-    participants,
-    teams,
-    createdby,
-  } = req.body;
+  const { meeting_name, meeting_lieu, meeting_date, meeting_time, createdby } =
+    req.body;
 
-  // la je vérifie si tous les champs requis sont remplis
+  // Convertir les participants et équipes en objets/array
+  const participants = req.body.participants
+    ? JSON.parse(req.body.participants)
+    : [];
+  const teams = req.body.teams ? JSON.parse(req.body.teams) : [];
+
+  const parsedCreator = JSON.parse(createdby);
   if (
     !meeting_name ||
     !meeting_lieu ||
     !meeting_date ||
     !meeting_time ||
-    // et si au moins un participant ou une équipe est sélectionné
-    ((!participants || participants.length === 0) &&
-      (!teams || teams.length === 0)) ||
-    !createdby ||
-    !createdby.firstname ||
-    !createdby.lastname
+    (participants.length === 0 && teams.length === 0) ||
+    !parsedCreator ||
+    !parsedCreator.firstname ||
+    !parsedCreator.lastname
   ) {
     return res.status(400).json({
       message:
@@ -442,103 +507,87 @@ app.post("/add-meeting", async (req, res) => {
   }
 
   try {
-    // Trouver l'ID du créateur par rapport à son nom et prénom
     const creatorRes = await pool.query(
       `SELECT id FROM public."Users" WHERE firstname = $1 AND lastname = $2`,
-      [createdby.firstname, createdby.lastname]
+      [parsedCreator.firstname, parsedCreator.lastname]
     );
 
     if (creatorRes.rows.length === 0) {
       return res.status(404).json({ message: "Créateur non trouvé" });
     }
 
-    // du coup si un créateur est trouvé on récupère son id on à le stock dans cette variable
     const creatorId = creatorRes.rows[0].id;
-    // Insértion de la réunion dans la table "Meetings"
+
     const result = await pool.query(
       `INSERT INTO public."Meetings"("name", "lieu", "date", "time", "createdby")
        VALUES ($1, $2, $3, $4, $5)
        RETURNING "id"`,
-      // la je renvoie l'id de la réunion
-      // pour pouvoir l'utiliser après pour ajouter les participants et les équipes
       [meeting_name, meeting_lieu, meeting_date, meeting_time, creatorId]
     );
 
-    // la du coup je récupère l'id de la réunion
     const meetingId = result.rows[0].id;
-
-    // la je créer un ensemble avec un Set pour stocker les ID des participants
     const uniqueParticipantIds = new Set();
 
-    // si des participants sont fournis
-    if (participants && participants.length > 0) {
-      // je parcours le tableau des participants
+    if (participants) {
       for (const participant of participants) {
-        // et je fais une requête pour trouver l'id de chaque participant
-        // en fonction de son nom et prénom
         const userRes = await pool.query(
           `SELECT id FROM public."Users" WHERE firstname = $1 AND lastname = $2`,
           [participant.firstname, participant.lastname]
         );
-
-        // si l'utilisateur est trouvé
         if (userRes.rows.length > 0) {
-          // je l'ajoute à l'ensemble avec son id
           uniqueParticipantIds.add(userRes.rows[0].id);
-        } else {
-          // sinon j'envoie un avertissement dans la console
-          console.warn(
-            `Participant non trouvé: ${participant.firstname} ${participant.lastname}`
-          );
         }
       }
     }
-    // si des équipes sont fournies
-    if (teams && teams.length > 0) {
-      // je fais une requête pour trouver les membres de chaque équipe
-      // en utilisant l'id de l'équipe
-      // et je récupère tous les id des membres de l'équipe
-      // en utilisant la clause ANY pour vérifier si l'id de l'équipe est dans le tableau des équipes
+
+    if (teams) {
       const teamMembersRes = await pool.query(
         `SELECT user_id FROM public."UsersTeam" WHERE team_id = ANY($1)`,
         [teams]
       );
-
-      // la je parcours le tableau des équipes
       teamMembersRes.rows.forEach((row) => {
-        // et j'ajoute chaque membre de l'équipe à l'ensemble
-        // en utilisant son id
-        // et vu que je fais un Set il ne peut y'avoir aucun doublon
-        // du coup si un utilisateur est déjà membre d'une autre équipe il ne sera ajouté qu'une seule fois
         uniqueParticipantIds.add(row.user_id);
       });
     }
-    // donc la je parcours tous les id qui sont stockés dans l'ensemble uniqueParticipantIds
+
     for (const userId of uniqueParticipantIds) {
-      const existingEntry = await pool.query(
-        // et pour chaque id je vérifie si il existe déjà dans la table UsersMeeting
-        `SELECT 1 FROM public."UsersMeeting" WHERE idmeeting = $1 AND iduser = $2`,
+      await pool.query(
+        `INSERT INTO public."UsersMeeting"("idmeeting", "iduser")
+         VALUES ($1, $2) ON CONFLICT DO NOTHING`,
         [meetingId, userId]
       );
+    }
 
-      // si il n'existe pas je l'ajoute
-      if (existingEntry.rows.length === 0) {
+    // ✅ Gestion sécurisée des fichiers multiples
+    const uploadDir = path.join(__dirname, "uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+
+    const files = req.files?.files;
+    if (files) {
+      const fileArray = Array.isArray(files) ? files : [files];
+      for (const file of fileArray) {
+        const filePath = path.join(uploadDir, file.name);
+        await file.mv(filePath);
+
         await pool.query(
-          `INSERT INTO public."UsersMeeting"("idmeeting", "iduser")
-               VALUES ($1, $2)`,
-          [meetingId, userId]
+          `INSERT INTO public."FilesMeeting" (name, path, id_meeting)
+           VALUES ($1, $2, $3)`,
+          [file.name, filePath, meetingId]
         );
       }
     }
+
     res.status(201).json({
       message: "Réunion créée avec succès",
       meetingId: meetingId,
     });
   } catch (error) {
     console.error("Erreur lors de la création de la réunion", error);
-    res
-      .status(500)
-      .json({ message: "Erreur serveur lors de la création de la réunion" });
+    res.status(500).json({
+      message: "Erreur serveur lors de la création de la réunion",
+    });
   }
 });
 
@@ -612,6 +661,7 @@ app.post("/create-team", async (req, res) => {
         [teamId, memberId]
       );
     }
+
     res.status(201).json({ message: "Équipe créée avec succès", teamId });
   } catch (error) {
     console.error("Erreur lors de la création de l'équipe", error);
@@ -761,24 +811,42 @@ app.put("/update-team/:id", async (req, res) => {
 });
 
 // Suppression d'une équipe
-app.delete("/delete-team/:id", async (req, res) => {
+app.delete("/delete-meeting/:id", async (req, res) => {
+  // req.params.id (id vient de l'url du nom que je donne après le /:)
   const id = req.params.id;
+  // le req query permet d'ajouter des paramètres dans l'url
+  // par exemple pour le const userId = req.query.userId si jamais mis à la place const userId = req.query.toto dans mon url front j'aurai mit tot et pas userId
+  // a voir dans le fichier deleteMeetingFetch.jsx ou il y'a l'url
+  const userId = req.query.userId; // Sa représente l'id de l'utilisateur qui fait la demande de suppression
+  const role = req.query.role; // Rôle de l'utilisateur (ADMIN ou MANAGER)
   try {
-    await pool.query(`DELETE FROM public."UsersTeam" WHERE team_id = $1`, [id]);
-    const result = await pool.query(
-      `DELETE FROM public."Teams" WHERE id = $1 `,
+    // La je récupère toutes les informations de la réunion sur laquelle l'utilisateur à cliqué
+    const meeting = await pool.query(
+      `SELECT * FROM public."Meetings" WHERE id = $1`,
       [id]
     );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Equipe non trouvée" });
+    if (meeting.rows.length === 0) {
+      return res.status(404).json({ message: "Réunion non trouvée" });
     }
-    res.status(200).json({ message: "Equipe supprimée avec succès" });
+    // dans cette variable je stock l'id du créateur de la réunion
+    const creatorId = meeting.rows[0].createdby;
+    if (role !== "ADMIN" && creatorId !== parseInt(userId)) {
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à supprimer cette réunion",
+      });
+    }
+    // D'abord on supprime les participants de la réunion
+    await pool.query(`DELETE FROM public."UsersMeeting" WHERE idmeeting = $1`, [
+      id,
+    ]);
+    // Ensuite, on supprime la réunion elle-même
+    await pool.query(`DELETE FROM public."Meetings" WHERE id = $1`, [id]);
+    res.status(200).json({ message: "Réunion supprimée avec succès" });
   } catch (error) {
-    console.error("Erreur lors de la suppression de l'équipe", error);
+    console.error("Erreur lors de la suppression de la réunion", error);
     res
       .status(500)
-      .json({ message: "Erreur serveur lors de la suppression de l'équipe" });
+      .json({ message: "Erreur serveur lors de la suppression de la réunion" });
   }
 });
 
