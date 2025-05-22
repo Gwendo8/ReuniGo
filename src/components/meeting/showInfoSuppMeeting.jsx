@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import UserMeetingFetch from "../../hook/userMeetingFetch";
 import { useRefresh } from "../others/refreshInfo";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,6 +13,7 @@ import {
 import boxVariant from "../animation/boxVariant";
 import SearchBar from "../others/searchBar";
 import jwtDecode from "jwt-decode";
+import UserMeetingFetch from "../../hook/meeting/userMeetingFetch";
 
 function ShowInfoSuppMeeting({ closePopup, meetingId }) {
   const { refreshTrigger } = useRefresh();

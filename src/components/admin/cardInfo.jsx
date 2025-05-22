@@ -12,8 +12,8 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import RoleFetch from "../../hook/roleFetch";
 import InputCard from "../inputs/inputCard";
-import UpdateUserFetch from "../../hook/updateUserFetch";
 import boxVariant from "../animation/boxVariant";
+import UpdateUserFetch from "../../hook/admin/updateUserFetch";
 
 // la je passe un paramètre userSelect
 // qui est l'utilisateur sélectionné au clic sur une carte

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import MeetingFetch from "../../hook/meetingFetch";
 import MeetingInfo from "./meetingInfo";
 import MeetingAdd from "./meetingAdd";
 import ShowMeeting from "./showMeeting";
 import { useRefresh } from "../others/refreshInfo";
+import MeetingFetch from "../../hook/meeting/meetingFetch";
 
 function Meetings() {
   const { refreshTrigger } = useRefresh();

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import ShowTeamFetch from "../../hook/showTeamFetch";
 import jwtDecode from "jwt-decode";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,9 +6,10 @@ import boxVariant from "../animation/boxVariant";
 import { FaUsers, FaTimes, FaFilter } from "react-icons/fa";
 import SearchBar from "../others/searchBar";
 import UpdateInfoTeam from "./updateInfoTeam";
-import DeleteTeamFetch from "../../hook/deleteTeamFetch";
-import ShowInfosTeamFetch from "../../hook/showInfosTeamFetch";
 import TeamCard from "./teamCard";
+import DeleteTeamFetch from "../../hook/team/deleteTeamFetch";
+import ShowInfosTeamFetch from "../../hook/team/showInfosTeamFetch";
+import ShowTeamFetch from "../../hook/team/showTeamFetch";
 
 function ShowTeam({ closePopup }) {
   const [isVisible, setIsVisible] = useState(true);

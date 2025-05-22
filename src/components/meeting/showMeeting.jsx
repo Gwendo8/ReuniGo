@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import MeetingFetch from "../../hook/meetingFetch";
 import FormatDate from "../others/formatDate";
 import borderColorMeeting from "../others/borderColorMeeting";
 import getStatus from "../others/getStatus";
 import { useRefresh } from "../others/refreshInfo";
 import ShowInfoSuppMeeting from "./showInfoSuppMeeting";
-import DeleteMeetingFetch from "../../hook/deleteMeetingFetch";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import jwtDecode from "jwt-decode";
+import DeleteMeetingFetch from "../../hook/meeting/deleteMeetingFetch";
+import MeetingFetch from "../../hook/meeting/meetingFetch";
 
 function ShowMeeting({ selectedSort }) {
   const { refreshTrigger } = useRefresh();

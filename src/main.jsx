@@ -10,6 +10,8 @@ import Register from "./pages/register.jsx";
 import { RefreshProvider } from "./components/others/refreshInfo.jsx";
 import Meeting from "./pages/meeting.jsx";
 import Contact from "./pages/contact.jsx";
+import ForgotPassword from "./pages/forgotPassword.jsx";
+import Statistics from "./pages/stat.jsx";
 
 createRoot(document.getElementById("root")).render(
   <RefreshProvider>
@@ -22,6 +24,8 @@ createRoot(document.getElementById("root")).render(
           <Route path="/admin" element={<Admin />} />
           <Route path="/meeting" element={<Meeting />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
+          <Route path="/stat" element={<Statistics />}></Route>
         </Routes>
       </Router>
     </StrictMode>

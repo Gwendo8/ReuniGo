@@ -3,12 +3,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaSave } from "react-icons/fa";
 import boxVariant from "../animation/boxVariant";
-import UpdateTeamFetch from "../../hook/updateTeamFetch";
 import ModalHeader from "./modalHeader";
 import TeamGeneralInfo from "./teamGeneralInfo";
 import TeamMembersList from "./teamMembersList";
 import AddTeamMembers from "./addTeamMembers";
 import LoadingButton from "../others/loadingButton";
+import UpdateTeamFetch from "../../hook/team/updateTeamFetch";
 
 function UpdateInfoTeam({ team, closePopup }) {
   const [isVisible, setIsVisible] = useState(true);

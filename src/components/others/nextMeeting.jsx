@@ -1,4 +1,4 @@
-import MeetingFetch from "../../hook/meetingFetch";
+import MeetingFetch from "../../hook/meeting/meetingFetch";
 import getStatus from "./getStatus";
 import { useRefresh } from "./refreshInfo";
 import { useEffect } from "react";

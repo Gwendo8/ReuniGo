@@ -13,10 +13,10 @@ import {
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
 import RoleFetch from "../../hook/roleFetch";
-import CreateUserFetch from "../../hook/createUserFetch";
 import InputCard from "../inputs/inputCard";
 import { useState } from "react";
 import boxVariant from "../animation/boxVariant";
+import CreateUserFetch from "../../hook/admin/createUserFetch";
 
 function CreateUser({ closeToggle }) {
   const { roleInfo, errorInfo, loading } = RoleFetch();

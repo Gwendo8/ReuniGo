@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import sgMail from "@sendgrid/mail";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,7 +35,120 @@ const pool = new Pool({
   port: 5432,
 });
 
+// clé token JWT
 const JWT_SECRET = "votre_cle_secrete";
+
+//clé api pour l'envoi d'email
+sgMail.setApiKey(
+  "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"
+);
+
+// route pour envoyer un mail de la page contact
+app.post("/send-email", async (req, res) => {
+  const { name, email, subject, message } = req.body;
+  if (!name || !email || !subject || !message) {
+    return res.status(400).send("Tous les champs sont requis.");
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(401).send("Adresse email invalide.");
+  }
+  const msg = {
+    // sa c'est l'adresse mail qui va recevoir le mail
+    to: [{ email: "gwendolinedardari7@gmail.com" }],
+    // et sa c'est l'adresse mail vérifiée par SendGrid
+    // qui va envoyer le mail
+    from: "gwendolinedardari7@gmail.com",
+    subject,
+    // au cas où si le client mail ne supporte pas le HTML
+    text: `Message de ${name} <${email}>\n\n${message}`,
+    // un peu de style pour le mail
+    html: `
+    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;">
+      <h2 style="color: #333;">Nouveau message de ${name}</h2>
+      <p><strong>Email de :</strong> <a href="mailto:${email}">${email}</a></p>
+      <p><strong>Sujet :</strong> ${subject}</p>
+      <hr style="margin: 20px 0;" />
+      <p>${message.replace(/\n/g, "<br>")}</p>
+    </div>
+  `,
+  };
+  try {
+    await sgMail.send(msg);
+    res.status(200).send("Email envoyé avec succès");
+  } catch (error) {
+    console.error(error.response.body);
+    res.status(500).send("Erreur lors de l'envoi de l'email");
+  }
+});
+
+// fonction pour générer un mot de passe aléatoire
+function generateRandomPassword() {
+  const alphabet =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const numbers = "0123456789";
+  let password = "";
+  for (let i = 0; i < 6; i++) {
+    password += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  }
+  password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  return password;
+}
+
+// route pour le mot de passe oublié
+app.post("/forgot-password", async (req, res) => {
+  const { mail } = req.body;
+  if (!mail) {
+    return res.status(400).json({ message: "Veuillez renseigner votre mail" });
+  }
+  const checkedMail = await pool.query(
+    'SELECT * FROM public."Users" WHERE mail = $1',
+    [mail]
+  );
+  if (checkedMail.rows.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "Aucun compte n'existe pour cette email" });
+  }
+  const newPassword = generateRandomPassword();
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+  await pool.query(`UPDATE public."Users" SET password = $1 WHERE mail = $2`, [
+    hashedNewPassword,
+    mail,
+  ]);
+
+  const msg = {
+    to: [{ email: mail }],
+    from: "gwendolinedardari7@gmail.com",
+    subject: "Réinitialisation de votre mot de passe",
+    text: `Votre nouveau mot de passe est : ${newPassword}\nVeuillez le changer après connexion.`,
+    html: `
+    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; background-color: #f9f9f9;">
+      <h2 style="color: #2c3e50;">Réinitialisation de mot de passe</h2>
+      <p style="font-size: 16px; color: #333;">
+        Bonjour,<br><br>
+        Vous avez demandé la réinitialisation de votre mot de passe. Voici votre nouveau mot de passe temporaire :
+      </p>
+      <p style="font-size: 18px; font-weight: bold; color: #e74c3c;">${newPassword}</p>
+      <p style="font-size: 14px; color: #555;">
+        Veuillez vous connecter avec ce mot de passe puis le modifier dans votre profil pour garantir la sécurité de votre compte.
+      </p>
+      <hr style="margin: 20px 0;" />
+      <p style="font-size: 12px; color: #999;">
+        Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email.
+      </p>
+    </div>
+  `,
+  };
+  try {
+    await sgMail.send(msg);
+    res.status(200).send("Email envoyé avec succès");
+  } catch (error) {
+    console.error(error.response.body);
+    return res.status(500).send("Erreur lors de l'envoi de l'email");
+  }
+});
 
 // inscription
 app.post("/register", async (req, res) => {
@@ -407,7 +521,7 @@ app.get("/files-meeting/:id", async (req, res) => {
   try {
     // ici je récupère que les fichiers de la réunion sélectionnée
     const result = await pool.query(
-      `SELECT id, name, path FROM public."FilesMeeting" WHERE id_meeting = $1`,
+      `SELECT id, name, path FROM public."FilesMeeting" WHERE idmeeting = $1`,
       [meetingId]
     );
     res.json(result.rows);
@@ -482,13 +596,15 @@ app.get("/usersmeeting", async (req, res) => {
 app.post("/add-meeting", async (req, res) => {
   const { meeting_name, meeting_lieu, meeting_date, meeting_time, createdby } =
     req.body;
-
-  // Convertir les participants et équipes en objets/array
+  // De base les participants et les équipes sont envoyé sous forme de chaine JSON
+  // La je convertis les chaines JSON en tableau d'objet
+  // Si aucune valeur n'est fournie, je mets un tableau vide
+  // J'ai convertis toutes ses données car en front j'utilise un formData pour envoyer les fichiers
   const participants = req.body.participants
     ? JSON.parse(req.body.participants)
     : [];
   const teams = req.body.teams ? JSON.parse(req.body.teams) : [];
-
+  // Pareil ici je convertis la chaine JSON en tableau d'objet
   const parsedCreator = JSON.parse(createdby);
   if (
     !meeting_name ||
@@ -505,8 +621,8 @@ app.post("/add-meeting", async (req, res) => {
         "Tous les champs requis (nom, lieu, date, heure, créateur) doivent être remplis, et au moins un participant ou une équipe doit être sélectionné.",
     });
   }
-
   try {
+    // ici je récupère l'id du créateur de la réunion
     const creatorRes = await pool.query(
       `SELECT id FROM public."Users" WHERE firstname = $1 AND lastname = $2`,
       [parsedCreator.firstname, parsedCreator.lastname]
@@ -517,7 +633,7 @@ app.post("/add-meeting", async (req, res) => {
     }
 
     const creatorId = creatorRes.rows[0].id;
-
+    // La on insère la nouvelle réunion dans la table "Meetings"
     const result = await pool.query(
       `INSERT INTO public."Meetings"("name", "lieu", "date", "time", "createdby")
        VALUES ($1, $2, $3, $4, $5)
@@ -526,59 +642,83 @@ app.post("/add-meeting", async (req, res) => {
     );
 
     const meetingId = result.rows[0].id;
+    // la je créer une variable pour stocker les id des participants
+    // j'utilise un Set pour éviter les doublons
     const uniqueParticipantIds = new Set();
 
     if (participants) {
+      // la je parcours chaque participant
       for (const participant of participants) {
+        // ici je récupère l'id de chaque participant
         const userRes = await pool.query(
           `SELECT id FROM public."Users" WHERE firstname = $1 AND lastname = $2`,
           [participant.firstname, participant.lastname]
         );
+        // si un participant est troouvé
         if (userRes.rows.length > 0) {
+          // j'ajoute ce participant dans le Set uniqueParticipantIds
           uniqueParticipantIds.add(userRes.rows[0].id);
         }
       }
     }
-
     if (teams) {
+      // ici je récupère tous les ids des membres de l'équipe
       const teamMembersRes = await pool.query(
-        `SELECT user_id FROM public."UsersTeam" WHERE team_id = ANY($1)`,
+        `SELECT user_id FROM public."UsersTeam" WHERE team_id = ANY($1)`, // ANY permet de vérfier si une ou pluaieurs valeurs sont présentes dans le tableau
         [teams]
       );
+      // pour chaque membre de l'équipe
       teamMembersRes.rows.forEach((row) => {
+        // on ajoute l'id du membre dans le Set uniqueParticipantIds
         uniqueParticipantIds.add(row.user_id);
       });
     }
-
+    // la je parcours tous les ids des participants uniques
     for (const userId of uniqueParticipantIds) {
+      // et j'insère ses ids dans la table UsersMeeting
+      // j'utilsie ON CONFLICT DO NOTHING pour éviter les doublons
       await pool.query(
         `INSERT INTO public."UsersMeeting"("idmeeting", "iduser")
          VALUES ($1, $2) ON CONFLICT DO NOTHING`,
         [meetingId, userId]
       );
     }
-
-    // ✅ Gestion sécurisée des fichiers multiples
+    // Partie pour l'insertion des fichiers
+    // ici je créer le chemin vers le dossier uploads
+    // __dirname est le répertoire courant du fichier dans lequel ce code est éxécuté
+    // avec /uploads à la fin pour créer le dossier uploads
     const uploadDir = path.join(__dirname, "uploads");
+    // la je vérifie si le dossier uploads existe
     if (!fs.existsSync(uploadDir)) {
+      // si il n'existe pas je le crée
       fs.mkdirSync(uploadDir);
     }
-
+    // ici je récupère les fichiers envoyés dans la requête si il y'en a
     const files = req.files?.files;
+    // du coup si il y'a des fichiers
     if (files) {
+      // je vérifie si file est un tableau ou un seul fichier
+      // si jamais il n'y a qu'un seul fichier
+      // alors il est convertis en un tableau d'un seul élément
       const fileArray = Array.isArray(files) ? files : [files];
+      // ici je parcours chaque fichier du tableau de fichiers fileArray
       for (const file of fileArray) {
+        // la je créer le chemin complet de la où le fichier sera enregistré
+        // en y ajoutant le nom du fichier
         const filePath = path.join(uploadDir, file.name);
+        // du coup ici je déplace le fichier téléchargé vers le chemin de filePath
         await file.mv(filePath);
-
+        // et du coup ici j'insère le ou les fichiers dans la table FilesMeeting
         await pool.query(
-          `INSERT INTO public."FilesMeeting" (name, path, id_meeting)
+          `INSERT INTO public."FilesMeeting" (name, path, idmeeting)
            VALUES ($1, $2, $3)`,
+          // par le nom du fichier
+          // son chemin
+          // et l'id de la réunion avec lequel il est associé
           [file.name, filePath, meetingId]
         );
       }
     }
-
     res.status(201).json({
       message: "Réunion créée avec succès",
       meetingId: meetingId,
@@ -593,20 +733,47 @@ app.post("/add-meeting", async (req, res) => {
 
 // Supprimer une réunion
 app.delete("/delete-meeting/:id", async (req, res) => {
+  // req.params.id (id vient de l'url du nom que je donne après le /:)
   const id = req.params.id;
+  // le req query permet d'ajouter des paramètres dans l'url
+  // par exemple pour le const userId = req.query.userId si jamais mis à la place const userId = req.query.toto dans mon url front j'aurai mit tot et pas userId
+  // a voir dans le fichier deleteMeetingFetch.jsx ou il y'a l'url
+  const userId = req.query.userId; // Sa représente l'id de l'utilisateur qui fait la demande de suppression
+  const role = req.query.role; // Rôle de l'utilisateur (ADMIN ou MANAGER)
   try {
-    // On supprimer d'abord les participants de la réunion
+    // La je récupère toutes les informations de la réunion sur laquelle l'utilisateur à cliqué
+    const meeting = await pool.query(
+      `SELECT * FROM public."Meetings" WHERE id = $1`,
+      [id]
+    );
+    if (meeting.rows.length === 0) {
+      return res.status(404).json({ message: "Réunion non trouvée" });
+    }
+    // dans cette variable je stock l'id du créateur de la réunion
+    const creatorId = meeting.rows[0].createdby;
+
+    // la je vérifie si l'utilisateur qui fait la demande de suppression
+    // est soit un admin soit le créateur de la réunion
+    // si ce n'est pas le cas je renvoie une erreur 403
+    if (role !== "ADMIN" && creatorId !== userId) {
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à supprimer cette réunion",
+      });
+    }
+    // D'abord on supprime les fichiers de la réunion
+    await pool.query(`DELETE FROM public."FilesMeeting" WHERE idmeeting = $1`, [
+      id,
+    ]);
+    // Ensuite on supprime les participants de la réunion
     await pool.query(`DELETE FROM public."UsersMeeting" WHERE idmeeting = $1`, [
       id,
     ]);
-    // Ensuite on supprime la réunion elle-même
+    // Puis on supprime la réunion elle-même
     const result = await pool.query(
       `DELETE FROM public."Meetings" WHERE id = $1 RETURNING *`,
       [id]
     );
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Réunion non trouvée" });
-    }
+    console.log("Réunion supprimée :", result.rows[0]);
     res.status(200).json({ message: "Réunion supprimée avec succès" });
   } catch (error) {
     console.error("Erreur lors de la suppression de la réunion", error);
@@ -811,42 +978,124 @@ app.put("/update-team/:id", async (req, res) => {
 });
 
 // Suppression d'une équipe
-app.delete("/delete-meeting/:id", async (req, res) => {
-  // req.params.id (id vient de l'url du nom que je donne après le /:)
+app.delete("/delete-team/:id", async (req, res) => {
   const id = req.params.id;
-  // le req query permet d'ajouter des paramètres dans l'url
-  // par exemple pour le const userId = req.query.userId si jamais mis à la place const userId = req.query.toto dans mon url front j'aurai mit tot et pas userId
-  // a voir dans le fichier deleteMeetingFetch.jsx ou il y'a l'url
-  const userId = req.query.userId; // Sa représente l'id de l'utilisateur qui fait la demande de suppression
-  const role = req.query.role; // Rôle de l'utilisateur (ADMIN ou MANAGER)
   try {
-    // La je récupère toutes les informations de la réunion sur laquelle l'utilisateur à cliqué
-    const meeting = await pool.query(
-      `SELECT * FROM public."Meetings" WHERE id = $1`,
+    await pool.query(`DELETE FROM public."UsersTeam" WHERE team_id = $1`, [id]);
+    const result = await pool.query(
+      `DELETE FROM public."Teams" WHERE id = $1 `,
       [id]
     );
-    if (meeting.rows.length === 0) {
-      return res.status(404).json({ message: "Réunion non trouvée" });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Equipe non trouvée" });
     }
-    // dans cette variable je stock l'id du créateur de la réunion
-    const creatorId = meeting.rows[0].createdby;
-    if (role !== "ADMIN" && creatorId !== parseInt(userId)) {
-      return res.status(403).json({
-        message: "Vous n'êtes pas autorisé à supprimer cette réunion",
-      });
-    }
-    // D'abord on supprime les participants de la réunion
-    await pool.query(`DELETE FROM public."UsersMeeting" WHERE idmeeting = $1`, [
-      id,
-    ]);
-    // Ensuite, on supprime la réunion elle-même
-    await pool.query(`DELETE FROM public."Meetings" WHERE id = $1`, [id]);
-    res.status(200).json({ message: "Réunion supprimée avec succès" });
+    res.status(200).json({ message: "Equipe supprimée avec succès" });
   } catch (error) {
-    console.error("Erreur lors de la suppression de la réunion", error);
+    console.error("Erreur lors de la suppression de l'équipe", error);
     res
       .status(500)
-      .json({ message: "Erreur serveur lors de la suppression de la réunion" });
+      .json({ message: "Erreur serveur lors de la suppression de l'équipe" });
+  }
+});
+
+///////////////////  STATISTIQUE
+// récupération des utilisateurs pas présent au réunion
+app.get("/users-presence", async (req, res) => {
+  try {
+    const userStats = await pool.query(`
+      SELECT u.id, u.firstname, u.lastname,
+      COUNT(*) FILTER (WHERE um.is_present = false) AS nb_absence
+      FROM "UsersMeeting" um
+      JOIN "Users" u ON um.iduser = u.id
+      GROUP BY u.id, u.firstname, u.lastname;`);
+
+    const totalUsers = await pool.query(`
+      SELECT COUNT(DISTINCT iduser) AS total_guest_users FROM "UsersMeeting";
+    `);
+    res.json({
+      users: userStats.rows,
+      total_guest_users: totalUsers.rows[0].total_guest_users,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// récupération des utilisateurs avec le plus d'absences aux réunion
+app.get("/users-top-absences", async (req, res) => {
+  try {
+    const userStats = await pool.query(`SELECT u.id,
+    CONCAT(u.firstname, ' ', u.lastname) AS name,
+    COUNT(*) FILTER (WHERE um.is_present = false) AS nb_absence
+    FROM "UsersMeeting" um
+    JOIN "Users" u ON um.iduser = u.id
+    GROUP BY u.id, u.firstname, u.lastname
+    HAVING COUNT(*) FILTER (WHERE um.is_present = false) >= 1
+    ORDER BY nb_absence DESC
+    LIMIT 5;`);
+    res.json(userStats.rows);
+  } catch (error) {
+    console.error("Erreur lors de la récupération", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+// récupération du nombre de rôles des utilisateurs
+app.get("/users-nb-roles", async (req, res) => {
+  try {
+    const userStats = await pool.query(`SELECT COUNT(*) AS total_users,
+    COUNT(*) FILTER (WHERE r.name = 'ADMIN') AS admin_count,
+    COUNT(*) FILTER (WHERE r.name = 'USER') AS user_count,
+    COUNT(*) FILTER (WHERE r.name = 'MANAGER') AS manager_count
+    FROM public."Users" u
+    JOIN public."Roles" r ON u.idrole = r.id;`);
+    res.json(userStats.rows);
+  } catch (error) {
+    console.error("Erreur lors de la récupération", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// récupération du nombre de réunion
+app.get("/nb-meetings", async (req, res) => {
+  try {
+    // La je récupère le nombre de réunion passé, en cours et futur
+    // COUNT va permettre de compter le nombre de ligne
+    // donc pour que le premier COUNT on va compter le nombre de réunion qui sera infèrieur à la date actuelle
+    // pour le second on va compter le nombre de réunion qui sera égale à la date actuelle
+    // et pour le dernier on va compter le nombre de réunion qui sera supérieur à la date actuelle
+    const meetingStats = await pool.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE date < CURRENT_DATE) AS past_meetings, 
+        COUNT(*) FILTER (WHERE date::date = CURRENT_DATE) AS ongoing_meetings,
+        COUNT(*) FILTER (WHERE date > CURRENT_DATE) AS future_meetings
+      FROM public."Meetings";
+    `);
+    // La je récupère le taux de participation globale aux réunions
+    // ROUND va permettre d'arrondir le résultat
+    // SUM va permettre de faire la somme des valeurs
+    // avec le WHEN je dis que si is_present est vrai alors je compte 1
+    // sinon je compte 0
+    // et je divise le tout par le nombre total de réunion
+    // NULLIF permet d'éviter la division par zéro
+    // donc si le nombre de réunion est égal à 0 alors je renvoie NULL
+    const participationStats = await pool.query(`
+      SELECT 
+        ROUND(
+          100.0 * SUM(CASE WHEN is_present THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0)
+        ) AS participation_rate
+      FROM public."UsersMeeting";
+    `);
+    res.json({
+      // le premier nom meetinStats est le nom de la variable que moi j'ai choisi elle aurait pu aussi s'appeler toto
+      // le second nom meetingStats est le nom de la variable ou je stock les résultats de ma requête sql
+      meetingStats: meetingStats.rows,
+      // le 3ème nom participation_rate est le nom de la colonne dans ma requête sql
+      participationStats: participationStats.rows[0].participation_rate,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des statistiques", error);
+    res.status(500).json({ error: "Erreur serveur" });
   }
 });
 

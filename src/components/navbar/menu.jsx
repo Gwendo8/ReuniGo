@@ -59,7 +59,7 @@ const SlideMenu = ({ userData, toggleOpen, boxVariant }) => {
       requiredRole: "ADMIN",
     },
     {
-      to: "/services",
+      to: "/stat",
       icon: <FaChartLine size={20} />,
       label: "Statistique",
       requiredRole: "ADMIN",

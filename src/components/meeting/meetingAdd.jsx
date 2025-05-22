@@ -4,7 +4,7 @@ import FormatDate from "../others/formatDate";
 import useToggle from "../others/useToggle";
 import FormMeeting from "./formMeeting";
 import { useRefresh } from "../others/refreshInfo";
-import { useEffect, useState } from "react"; // Importer useState
+import { useEffect, useState } from "react";
 import TeamCreationForm from "../team/addTeamForm";
 import jwtDecode from "jwt-decode";
 import ShowTeam from "../team/showTeam";

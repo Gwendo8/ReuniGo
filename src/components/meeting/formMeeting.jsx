@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AddMeetingFetch from "../../hook/addMeeting";
 import InputCard from "../inputs/inputCard";
 import { Autocomplete } from "@mui/material";
 /* eslint-disable no-unused-vars */
@@ -17,6 +16,7 @@ import {
   FaTimes,
   FaFileUpload,
 } from "react-icons/fa";
+import AddMeetingFetch from "../../hook/meeting/addMeeting";
 
 function FormMeeting({ onSuccess }) {
   const [isVisible, setIsVisible] = useState(true);

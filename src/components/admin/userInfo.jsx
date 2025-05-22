@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import UserInfoFetch from "../../hook/userInfoFetch";
 import useToggle from "../others/useToggle";
 import CardInfo from "./cardInfo";
 import BoutonInsc from "../button/bouton-ins";
 import { Plus, Trash2, Filter } from "lucide-react";
 import { useRefresh } from "../others/refreshInfo";
 import CreateUser from "./createUser";
-import DeleteUserFetch from "../../hook/deleteUserFetch";
 import SearchBar from "../others/searchBar";
 /* eslint-disable no-unused-vars */
 import { motion } from "framer-motion";
+import UserInfoFetch from "../../hook/admin/userInfoFetch";
+import DeleteUserFetch from "../../hook/admin/deleteUserFetch";
 
 function UserInfo() {
   const { refreshTrigger, handleCloseCard } = useRefresh();

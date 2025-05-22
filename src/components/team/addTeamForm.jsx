@@ -3,8 +3,8 @@ import { TextField, Autocomplete } from "@mui/material";
 import { FaUsers, FaEdit, FaSave, FaPalette, FaTimes } from "react-icons/fa";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
-import AddTeamFetch from "../../hook/addTeamFetch";
 import boxVariant from "../animation/boxVariant";
+import AddTeamFetch from "../../hook/team/addTeamFetch";
 
 function TeamCreationForm({ onSuccess, closePopup }) {
   const [isVisible, setIsVisible] = useState(true);

@@ -215,7 +215,7 @@ function Login() {
 
               <div className="flex justify-end">
                 <a
-                  href="/mdp-oublie"
+                  href="/forgot"
                   className="text-sm text-[#00ADE1] hover:text-[#17428C] transition-colors"
                 >
                   Mot de passe oublié ?
