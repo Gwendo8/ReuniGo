@@ -1,7 +1,12 @@
+"use client";
+
+import { useContext } from "react";
 import NbMeetingFetch from "../../hook/statistic/nbMeetingFetch";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { ThemeContext } from "../others/themeContext";
 
 function NbMeeting() {
+  const { theme } = useContext(ThemeContext);
   const { nbMeeting, rateMeetings, loading, error } = NbMeetingFetch();
 
   const pastMeeting = nbMeeting[0]?.past_meetings ?? 0;
@@ -28,20 +33,40 @@ function NbMeeting() {
     { label: "Taux de participation", value: rateMeeting, color: "#3cba92" },
   ];
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <h2 className="text-lg font-semibold text-[#2a6b5d] mb-4">
+    <div
+      className={`rounded-xl shadow-md p-6 ${
+        theme === "dark"
+          ? "bg-slate-800/95 border border-slate-700/50"
+          : "bg-white"
+      }`}
+    >
+      <h2
+        className={`text-lg font-semibold mb-4 ${
+          theme === "dark" ? "text-cyan-400" : "text-[#2a6b5d]"
+        }`}
+      >
         Statistiques des réunions
       </h2>
       {/* Chargement */}
       {loading && (
-        <div className="flex items-center justify-center text-gray-500">
+        <div
+          className={`flex items-center justify-center ${
+            theme === "dark" ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           <Loader2 className="animate-spin mr-2" size={18} />
           Chargement en cours...
         </div>
       )}
       {/* Erreur */}
       {error && (
-        <div className="flex items-center justify-center text-red-600 bg-red-100 p-3 rounded-lg">
+        <div
+          className={`flex items-center justify-center p-3 rounded-lg ${
+            theme === "dark"
+              ? "text-red-300 bg-red-900/20"
+              : "text-red-600 bg-red-100"
+          }`}
+        >
           <AlertCircle className="mr-2" size={18} />
           {error}
         </div>
@@ -51,12 +76,27 @@ function NbMeeting() {
           {meetingStats.map((stat, index) => (
             <div
               key={index}
-              className="flex items-center p-4 bg-gray-50 rounded-lg"
+              className={`flex items-center p-4 rounded-lg ${
+                theme === "dark" ? "bg-gray-700/50" : "bg-gray-50"
+              }`}
             >
-              <div className={`w-2 h-10 ${stat.color} rounded-full mr-3`}></div>
+              <div
+                className="w-2 h-10 rounded-full mr-3"
+                style={{ backgroundColor: stat.color }}
+              ></div>
               <div>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                <p className="text-xl font-bold">
+                <p
+                  className={`text-sm ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  {stat.label}
+                </p>
+                <p
+                  className={`text-xl font-bold ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
                   {stat.label === "Taux de participation"
                     ? `${stat.value} %`
                     : stat.value}

@@ -1,10 +1,12 @@
+import { useContext, useEffect } from "react";
 import FormatDate from "../others/formatDate";
 import NextMeeting from "../others/nextMeeting";
 import TimeRemaining from "../others/timeRemaining";
 import { useRefresh } from "../others/refreshInfo";
-import { useEffect } from "react";
+import { ThemeContext } from "../others/themeContext";
 
 function MeetingInfo() {
+  const { theme } = useContext(ThemeContext);
   const { refreshTrigger } = useRefresh();
   const { getTimeRemaining } = TimeRemaining();
   const { formatDate } = FormatDate();
@@ -54,7 +56,13 @@ function MeetingInfo() {
               📍 {nextMeeting.meeting_lieu || "Lieu non spécifié"}
             </p>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-amber-300 text-emerald-700 font-bold flex items-center justify-center">
+              <div
+                className={`w-8 h-8 rounded-full font-bold flex items-center justify-center ${
+                  theme === "dark"
+                    ? "bg-cyan-500 text-slate-800"
+                    : "bg-amber-300 text-emerald-700"
+                }`}
+              >
                 {getInitials(nextMeeting.creator_name || "")}
               </div>
               <span className="text-sm">

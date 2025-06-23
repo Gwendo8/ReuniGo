@@ -1,5 +1,7 @@
+import { useContext } from "react";
 import InputShowTeam from "../inputs/inputShowTeam";
 import ColorPicker from "./colorPicker";
+import { ThemeContext } from "../others/themeContext";
 
 function TeamGeneralInfo({
   team,
@@ -9,12 +11,24 @@ function TeamGeneralInfo({
   setLocalColors,
   colorPalette,
 }) {
+  const { theme } = useContext(ThemeContext);
+
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+      <h3
+        className={`text-lg font-semibold mb-2 ${
+          theme === "dark" ? "text-gray-200" : "text-gray-800"
+        }`}
+      >
         Informations générales
       </h3>
-      <div className="bg-gray-50 p-4 rounded-lg space-y-3 text-gray-700 border border-gray-100">
+      <div
+        className={`p-4 rounded-lg space-y-3 border ${
+          theme === "dark"
+            ? "bg-slate-700 text-gray-200 border-slate-600"
+            : "bg-gray-50 text-gray-700 border-gray-100"
+        }`}
+      >
         <InputShowTeam
           value={localTeamName}
           label="Nom :"

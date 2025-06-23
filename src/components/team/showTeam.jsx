@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import jwtDecode from "jwt-decode";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,8 +10,10 @@ import TeamCard from "./teamCard";
 import DeleteTeamFetch from "../../hook/team/deleteTeamFetch";
 import ShowInfosTeamFetch from "../../hook/team/showInfosTeamFetch";
 import ShowTeamFetch from "../../hook/team/showTeamFetch";
+import { ThemeContext } from "../others/themeContext";
 
 function ShowTeam({ closePopup }) {
+  const { theme } = useContext(ThemeContext);
   const [isVisible, setIsVisible] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
@@ -101,7 +103,9 @@ function ShowTeam({ closePopup }) {
           exit="exit"
         >
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            className={`rounded-2xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ${
+              theme === "dark" ? "bg-slate-800" : "bg-white"
+            }`}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
@@ -125,7 +129,13 @@ function ShowTeam({ closePopup }) {
               </p>
             </div>
 
-            <div className="bg-gray-50 p-4 border-b">
+            <div
+              className={`p-4 border-b ${
+                theme === "dark"
+                  ? "bg-slate-700 border-slate-600"
+                  : "bg-gray-50"
+              }`}
+            >
               <div className="flex flex-col sm:flex-row gap-3 items-center">
                 <div className="flex-1">
                   <SearchBar
@@ -133,13 +143,21 @@ function ShowTeam({ closePopup }) {
                     placeholder="Rechercher une équipe..."
                   />
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div
+                  className={`flex items-center gap-2 text-sm ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
                   <FaFilter className="text-blue-500" />
                   <span>Trier par:</span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 ${
+                      theme === "dark"
+                        ? "bg-slate-600 border-slate-500 text-gray-200"
+                        : "border-gray-200"
+                    }`}
                   >
                     <option value="name">Nom</option>
                     <option value="members">Membres</option>
@@ -150,7 +168,11 @@ function ShowTeam({ closePopup }) {
 
             <div className="p-6 overflow-y-auto flex-1">
               {loading ? (
-                <p className="text-blue-500 text-center mb-4">
+                <p
+                  className={`text-center mb-4 ${
+                    theme === "dark" ? "text-blue-400" : "text-blue-500"
+                  }`}
+                >
                   Chargement des équipes...
                 </p>
               ) : (
@@ -165,7 +187,11 @@ function ShowTeam({ closePopup }) {
                       />
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center">
+                    <p
+                      className={`text-center ${
+                        theme === "dark" ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       Aucune équipe disponible.
                     </p>
                   )}

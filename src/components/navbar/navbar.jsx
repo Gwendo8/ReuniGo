@@ -8,12 +8,14 @@ import useToggle from "../others/useToggle";
 import SlideMenu from "./menu";
 import UserAvatar from "./userAvatar";
 import { useRefresh } from "../others/refreshInfo";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { ThemeContext } from "../others/themeContext";
 
 function Navbar() {
   const [isOpen, toggleOpen] = useToggle(false);
   const { refreshTrigger } = useRefresh();
   const [userData, setUserData] = useState(null);
+  const { theme } = useContext(ThemeContext);
 
   const updateUserData = () => {
     const token = localStorage.getItem("token");
@@ -72,15 +74,29 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-lg px-3 sm:px-4 md:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl w-full mx-auto flex justify-between items-center relative">
+    <nav
+      className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl w-full mx-auto flex justify-between items-center relative ${
+        theme === "dark"
+          ? "bg-slate-800/95 border border-slate-700/50 shadow-2xl"
+          : "bg-white shadow-lg"
+      }`}
+    >
       {/* Logo et Titre */}
       <div className="flex items-center gap-2 sm:gap-4">
         <img
           src="/img/logo-saint-gobain.png"
           alt="Logo"
-          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
+          className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain ${
+            theme === "dark" ? "filter invert" : ""
+          }`}
         />
-        <h1 className="text-lg sm:text-xl md:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#00ADE1] to-[#17428C]">
+        <h1
+          className={`text-lg sm:text-xl md:text-2xl text-transparent bg-clip-text ${
+            theme === "dark"
+              ? "bg-gradient-to-r from-cyan-400 to-blue-500"
+              : "bg-gradient-to-r from-[#00ADE1] to-[#17428C]"
+          }`}
+        >
           ReuniGo
         </h1>
       </div>
@@ -104,7 +120,13 @@ function Navbar() {
 
         {/* Version mobile de l'avatar - juste les initiales */}
         {userData && (
-          <div className="sm:hidden flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white font-bold text-sm">
+          <div
+            className={`sm:hidden flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm ${
+              theme === "dark"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600"
+                : "bg-gradient-to-r from-[#00ADE1] to-[#17428C]"
+            }`}
+          >
             {userData.firstname[0]}
             {userData.lastname[0]}
           </div>
@@ -114,7 +136,13 @@ function Navbar() {
         {!userData && (
           <div className="sm:hidden">
             <Link to="/login">
-              <button className="px-3 py-1.5 text-sm rounded-lg bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white font-medium">
+              <button
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium ${
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
+                    : "bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white"
+                }`}
+              >
                 Connexion
               </button>
             </Link>
@@ -123,15 +151,24 @@ function Navbar() {
 
         <button
           onClick={toggleOpen}
-          className="p-1.5 sm:p-2 rounded-full transition-colors duration-200 hover:bg-gray-100 focus:outline-none"
+          className={`p-1.5 sm:p-2 rounded-full transition-colors duration-200 focus:outline-none ${
+            theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"
+          }`}
           aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         >
           {isOpen ? (
-            <IoMdClose size={24} className="text-[#17428C] sm:text-[30px]" />
+            <IoMdClose
+              size={24}
+              className={`sm:text-[30px] ${
+                theme === "dark" ? "text-cyan-400" : "text-[#17428C]"
+              }`}
+            />
           ) : (
             <GiHamburgerMenu
               size={22}
-              className="text-[#00ADE1] z-10 sm:text-[26px]"
+              className={`z-10 sm:text-[26px] ${
+                theme === "dark" ? "text-cyan-400" : "text-[#00ADE1]"
+              }`}
             />
           )}
         </button>

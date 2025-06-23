@@ -1,7 +1,16 @@
+import { useContext } from "react";
+import { ThemeContext } from "../others/themeContext";
+
 const CamembertStat = ({ data, total }) => {
+  const { theme } = useContext(ThemeContext);
+
   if (total === 0) {
     return (
-      <div className="h-48 w-48 mx-auto flex items-center justify-center text-gray-400">
+      <div
+        className={`h-48 w-48 mx-auto flex items-center justify-center ${
+          theme === "dark" ? "text-gray-500" : "text-gray-400"
+        }`}
+      >
         Aucune donnée
       </div>
     );
@@ -17,12 +26,29 @@ const CamembertStat = ({ data, total }) => {
       <div className="relative h-48 w-48 mx-auto">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           <circle cx="50" cy="50" r="40" fill="#3cba92" />
-          <circle cx="50" cy="50" r="25" fill="white" />
+          <circle
+            cx="50"
+            cy="50"
+            r="25"
+            fill={theme === "dark" ? "#1e293b" : "white"}
+          />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-2xl font-bold text-[#2a6b5d]">{total}</p>
-            <p className="text-xs text-gray-500">Total</p>
+            <p
+              className={`text-2xl font-bold ${
+                theme === "dark" ? "text-cyan-400" : "text-[#2a6b5d]"
+              }`}
+            >
+              {total}
+            </p>
+            <p
+              className={`text-xs ${
+                theme === "dark" ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Total
+            </p>
           </div>
         </div>
       </div>
@@ -57,12 +83,29 @@ const CamembertStat = ({ data, total }) => {
           cumulativePercentage += percentage;
           return <path key={index} d={pathData} fill={item.color} />;
         })}
-        <circle cx="50" cy="50" r="25" fill="white" />
+        <circle
+          cx="50"
+          cy="50"
+          r="25"
+          fill={theme === "dark" ? "#1e293b" : "white"}
+        />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-2xl font-bold text-[#2a6b5d]">{total}</p>
-          <p className="text-xs text-gray-500">Total</p>
+          <p
+            className={`text-2xl font-bold ${
+              theme === "dark" ? "text-cyan-400" : "text-[#2a6b5d]"
+            }`}
+          >
+            {total}
+          </p>
+          <p
+            className={`text-xs ${
+              theme === "dark" ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            Total
+          </p>
         </div>
       </div>
     </div>

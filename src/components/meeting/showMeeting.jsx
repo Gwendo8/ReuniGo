@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import jwtDecode from "jwt-decode";
 import FormatDate from "../others/formatDate";
 import borderColorMeeting from "../others/borderColorMeeting";
 import getStatus from "../others/getStatus";
 import { useRefresh } from "../others/refreshInfo";
 import ShowInfoSuppMeeting from "./showInfoSuppMeeting";
-import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
-import jwtDecode from "jwt-decode";
 import DeleteMeetingFetch from "../../hook/meeting/deleteMeetingFetch";
 import MeetingFetch from "../../hook/meeting/meetingFetch";
+import { ThemeContext } from "../others/themeContext";
 
 function ShowMeeting({ selectedSort }) {
+  const { theme } = useContext(ThemeContext);
   const { refreshTrigger } = useRefresh();
   const { meeting, loading, error, fetchData } = MeetingFetch();
   const { formatDate } = FormatDate();
@@ -54,9 +56,16 @@ function ShowMeeting({ selectedSort }) {
   });
 
   const statusColors = {
-    "À venir": "bg-orange-300",
-    "En cours": "bg-green-300",
-    Passé: "bg-red-300",
+    "À venir":
+      theme === "dark"
+        ? "bg-orange-600 text-orange-100"
+        : "bg-orange-300 text-orange-800",
+    "En cours":
+      theme === "dark"
+        ? "bg-green-600 text-green-100"
+        : "bg-green-300 text-green-800",
+    Passé:
+      theme === "dark" ? "bg-red-600 text-red-100" : "bg-red-300 text-red-800",
   };
   // Fonction pour modifier le design de la section en fonction de son statut
   const statusWidth = {
@@ -87,21 +96,39 @@ function ShowMeeting({ selectedSort }) {
   return (
     <div className="flex flex-col">
       {loading ? (
-        <p className="text-sm text-gray-500">Chargement des réunions...</p>
+        <p
+          className={`text-sm ${
+            theme === "dark" ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
+          Chargement des réunions...
+        </p>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p
+          className={`text-sm ${
+            theme === "dark" ? "text-red-400" : "text-red-500"
+          }`}
+        >
+          {error}
+        </p>
       ) : (
         sectionsToRender.map((status) =>
           groupedMeetings[status].length > 0 ? (
             <div key={status} className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <h2 className={`${statusColors[status]} px-5 py-1 rounded-lg`}>
+                <h2
+                  className={`${statusColors[status]} px-5 py-1 rounded-lg font-medium`}
+                >
                   {status}
                 </h2>
                 {/* Le bouton voir plus ne s'affiche que si il y'a plus de 2 réunions dans la section*/}
                 {groupedMeetings[status].length > 2 && (
                   <button
-                    className="text-emerald-700 text-sm font-semibold cursor-pointer flex items-center gap-1 hover:underline"
+                    className={`text-sm font-semibold cursor-pointer flex items-center gap-1 hover:underline transition-colors ${
+                      theme === "dark"
+                        ? "text-cyan-400 hover:text-cyan-300"
+                        : "text-emerald-700 hover:text-emerald-800"
+                    }`}
                     onClick={() => toggleSection(status)}
                   >
                     {expandedSections[status] ? (
@@ -124,12 +151,16 @@ function ShowMeeting({ selectedSort }) {
                 ).map((meet) => (
                   <div
                     key={meet.meeting_name}
-                    className={`bg-white shadow-md rounded-lg p-4 mb-4 flex flex-col gap-2 group relative ${
+                    className={`shadow-md rounded-lg p-4 mb-4 flex flex-col gap-2 group relative ${
                       statusWidth[status]
                     } ${borderColorMeeting(
                       meet.meeting_date,
                       meet.meeting_time
-                    )}`}
+                    )} ${
+                      theme === "dark"
+                        ? "bg-slate-800 border border-slate-700"
+                        : "bg-white"
+                    }`}
                   >
                     {(roleUser === "ADMIN" ||
                       (roleUser === "MANAGER" &&
@@ -139,40 +170,77 @@ function ShowMeeting({ selectedSort }) {
                           e.stopPropagation();
                           handleDeleteMeeting(meet.id);
                         }}
-                        className="text-gray-400 hover:text-red-500 transition-colors top-2 right-2 absolute"
+                        className={`transition-colors top-2 right-2 absolute ${
+                          theme === "dark"
+                            ? "text-gray-500 hover:text-red-400"
+                            : "text-gray-400 hover:text-red-500"
+                        }`}
                         title="Supprimer"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
                     )}
-                    <p className="text-lg text-emerald-800 font-medium pr-6">
+                    <p
+                      className={`text-lg font-medium pr-6 ${
+                        theme === "dark" ? "text-cyan-400" : "text-emerald-800"
+                      }`}
+                    >
                       {meet.meeting_name}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p
+                      className={`text-sm ${
+                        theme === "dark" ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       📍 {meet.meeting_lieu || "Lieu non spécifié"}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p
+                      className={`text-sm ${
+                        theme === "dark" ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       {formatDate(meet.meeting_date).dayName},{" "}
                       {formatDate(meet.meeting_date).fullDate}
                     </p>
-                    <p className="text-md text-black font-base">
+                    <p
+                      className={`text-md font-base ${
+                        theme === "dark" ? "text-gray-300" : "text-black"
+                      }`}
+                    >
                       🕒 {formatDate(meet.meeting_date).formattedTime}
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full">
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
+                          theme === "dark"
+                            ? "bg-cyan-900/30 text-cyan-400"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}
+                      >
                         ⏱️
                       </span>
                       <span>
                         Durée :{" "}
-                        <span className="font-medium text-gray-800">
+                        <span
+                          className={`font-medium ${
+                            theme === "dark" ? "text-gray-300" : "text-gray-800"
+                          }`}
+                        >
                           {meet.meeting_time} min
                         </span>
                       </span>
                     </div>
                     <div className="flex justify-end mt-2">
                       <button
-                        className="bg-transparent hover:bg-emerald-600 border border-emerald-700 rounded-md p-2 text-emerald-700
-                         hover:text-white font-medium transition duration-300 w-fit"
+                        className={`border rounded-md p-2 font-medium transition duration-300 w-fit ${
+                          theme === "dark"
+                            ? "bg-transparent hover:bg-cyan-600 border-cyan-700 text-cyan-400 hover:text-white"
+                            : "bg-transparent hover:bg-emerald-600 border-emerald-700 text-emerald-700 hover:text-white"
+                        }`}
                         onClick={() => openPopup(meet.id)}
                       >
                         Plus de détails
@@ -184,7 +252,11 @@ function ShowMeeting({ selectedSort }) {
               {/* La j'affiche un message qui indique combien de réunions sont masqués */}
               {!expandedSections[status] &&
                 groupedMeetings[status].length > 2 && (
-                  <p className="text-sm text-gray-500 mt-2 text-center italic">
+                  <p
+                    className={`text-sm mt-2 text-center italic ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     {groupedMeetings[status].length - 2}{" "}
                     {groupedMeetings[status].length - 2 > 1
                       ? "réunions supplémentaires"

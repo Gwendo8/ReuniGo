@@ -1,9 +1,7 @@
-import { useState } from "react";
-import InputCard from "../inputs/inputCard";
+import { useState, useContext } from "react";
 import { Autocomplete } from "@mui/material";
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
-import boxVariant from "../animation/boxVariant";
 import TextField from "@mui/material/TextField";
 import {
   FaCalendarAlt,
@@ -12,13 +10,16 @@ import {
   FaUsers,
   FaEdit,
   FaSave,
-  FaTimesCircle,
   FaTimes,
   FaFileUpload,
 } from "react-icons/fa";
+import InputCard from "../inputs/inputCard";
+import boxVariant from "../animation/boxVariant";
 import AddMeetingFetch from "../../hook/meeting/addMeeting";
+import { ThemeContext } from "../others/themeContext";
 
 function FormMeeting({ onSuccess }) {
+  const { theme } = useContext(ThemeContext);
   const [isVisible, setIsVisible] = useState(true);
   const {
     meeting_name,
@@ -51,13 +52,23 @@ function FormMeeting({ onSuccess }) {
           exit="exit"
         >
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl w-[90%] max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            className={`rounded-2xl shadow-2xl w-[90%] max-w-2xl max-h-[90vh] overflow-hidden flex flex-col ${
+              theme === "dark"
+                ? "bg-slate-800 border border-slate-700"
+                : "bg-white"
+            }`}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
           >
-            {/* Header avec dégradé */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-400 p-6 text-white">
+            {/* Header */}
+            <div
+              className={`p-6 text-white ${
+                theme === "dark"
+                  ? "bg-gradient-to-r from-cyan-600 to-blue-600"
+                  : "bg-gradient-to-r from-blue-600 to-blue-400"
+              }`}
+            >
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   <FaCalendarAlt className="text-white" />
@@ -71,7 +82,11 @@ function FormMeeting({ onSuccess }) {
                   <FaTimes />
                 </button>
               </div>
-              <p className="text-blue-100 mt-1">
+              <p
+                className={`mt-1 ${
+                  theme === "dark" ? "text-cyan-100" : "text-blue-100"
+                }`}
+              >
                 Planifiez une nouvelle réunion et invitez des participants
               </p>
             </div>
@@ -79,8 +94,20 @@ function FormMeeting({ onSuccess }) {
             <div className="p-6 overflow-y-auto">
               <form className="grid grid-cols-1 gap-6">
                 {/* Section Informations générales */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-lg font-medium text-gray-700 mb-4 border-b pb-2">
+                <div
+                  className={`p-4 rounded-xl ${
+                    theme === "dark"
+                      ? "bg-gray-700/50 border border-gray-600"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <h3
+                    className={`text-lg font-medium mb-4 pb-2 border-b ${
+                      theme === "dark"
+                        ? "text-white border-gray-600"
+                        : "text-gray-700 border-gray-200"
+                    }`}
+                  >
                     Informations générales
                   </h3>
                   <div className="space-y-4">
@@ -102,8 +129,20 @@ function FormMeeting({ onSuccess }) {
                 </div>
 
                 {/* Section Date et durée */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-lg font-medium text-gray-700 mb-4 border-b pb-2">
+                <div
+                  className={`p-4 rounded-xl ${
+                    theme === "dark"
+                      ? "bg-gray-700/50 border border-gray-600"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <h3
+                    className={`text-lg font-medium mb-4 pb-2 border-b ${
+                      theme === "dark"
+                        ? "text-white border-gray-600"
+                        : "text-gray-700 border-gray-200"
+                    }`}
+                  >
                     Date et durée
                   </h3>
                   <div className="space-y-4">
@@ -127,13 +166,33 @@ function FormMeeting({ onSuccess }) {
                 </div>
 
                 {/* Section Participants */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-lg font-medium text-gray-700 mb-4 border-b pb-2">
+                <div
+                  className={`p-4 rounded-xl ${
+                    theme === "dark"
+                      ? "bg-gray-700/50 border border-gray-600"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <h3
+                    className={`text-lg font-medium mb-4 pb-2 border-b ${
+                      theme === "dark"
+                        ? "text-white border-gray-600"
+                        : "text-gray-700 border-gray-200"
+                    }`}
+                  >
                     Participants
                   </h3>
                   <div className="flex flex-col">
-                    <label className="text-md md:text-lg text-gray-800 mb-2 flex items-center">
-                      <FaUsers className="mr-2 text-blue-600" />
+                    <label
+                      className={`text-md md:text-lg mb-2 flex items-center ${
+                        theme === "dark" ? "text-white" : "text-gray-800"
+                      }`}
+                    >
+                      <FaUsers
+                        className={`mr-2 ${
+                          theme === "dark" ? "text-cyan-400" : "text-blue-600"
+                        }`}
+                      />
                       Participants et Équipes
                     </label>
                     <Autocomplete
@@ -149,35 +208,93 @@ function FormMeeting({ onSuccess }) {
                           {...params}
                           placeholder="Ajouter des membres..."
                           variant="outlined"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              backgroundColor:
+                                theme === "dark" ? "#374151" : "#ffffff",
+                              color: theme === "dark" ? "#ffffff" : "#000000",
+                              "& fieldset": {
+                                borderColor:
+                                  theme === "dark" ? "#4B5563" : "#D1D5DB",
+                              },
+                              "&:hover fieldset": {
+                                borderColor:
+                                  theme === "dark" ? "#06B6D4" : "#3B82F6",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor:
+                                  theme === "dark" ? "#06B6D4" : "#3B82F6",
+                              },
+                            },
+                            "& .MuiInputBase-input::placeholder": {
+                              color: theme === "dark" ? "#9CA3AF" : "#6B7280",
+                            },
+                          }}
                         />
                       )}
                     />
                   </div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-lg font-medium text-gray-700 mb-4 border-b pb-2">
+                <div
+                  className={`p-4 rounded-xl ${
+                    theme === "dark"
+                      ? "bg-gray-700/50 border border-gray-600"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <h3
+                    className={`text-lg font-medium mb-4 pb-2 border-b ${
+                      theme === "dark"
+                        ? "text-white border-gray-600"
+                        : "text-gray-700 border-gray-200"
+                    }`}
+                  >
                     Fichiers
                   </h3>
-                  <label className="text-md md:text-lg text-gray-800 mb-2 flex items-center">
-                    <FaFileUpload className="mr-2 text-blue-600" />
+                  <label
+                    className={`text-md md:text-lg mb-2 flex items-center ${
+                      theme === "dark" ? "text-white" : "text-gray-800"
+                    }`}
+                  >
+                    <FaFileUpload
+                      className={`mr-2 ${
+                        theme === "dark" ? "text-cyan-400" : "text-blue-600"
+                      }`}
+                    />
                     Sélectionner des fichiers :
                   </label>
                   <input
                     type="file"
                     multiple
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className={`block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold transition-colors ${
+                      theme === "dark"
+                        ? "text-gray-300 file:bg-cyan-900/50 file:text-cyan-300 hover:file:bg-cyan-800/50"
+                        : "text-gray-500 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    }`}
                     onChange={(e) => setFile([...e.target.files])}
                   />
                 </div>
 
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error && (
+                  <p
+                    className={`text-sm ${
+                      theme === "dark" ? "text-red-400" : "text-red-500"
+                    }`}
+                  >
+                    {error}
+                  </p>
+                )}
 
                 {/* Footer avec boutons */}
                 <div className="flex justify-between mt-2 gap-3">
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 transition duration-300"
+                    className={`px-5 py-2.5 rounded-xl border transition duration-300 ${
+                      theme === "dark"
+                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
                   >
                     Annuler
                   </button>
@@ -190,7 +307,11 @@ function FormMeeting({ onSuccess }) {
                         onSuccess();
                       });
                     }}
-                    className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition duration-300 flex items-center gap-2"
+                    className={`px-5 py-2.5 rounded-xl shadow-lg transition duration-300 flex items-center gap-2 text-white ${
+                      theme === "dark"
+                        ? "bg-cyan-600 hover:bg-cyan-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                   >
                     <FaSave /> Enregistrer
                   </button>

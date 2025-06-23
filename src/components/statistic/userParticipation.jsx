@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import UserPresenceFetch from "../../hook/statistic/userPresenceFetch";
 import NbMeeting from "./nbMeeting";
 import NbPresence from "./nbPresence";
@@ -5,8 +6,10 @@ import StatCard from "./statCard";
 /* eslint-disable no-unused-vars */
 import { motion } from "framer-motion";
 import { Users, CalendarCheck, CalendarX, AlertTriangle } from "lucide-react";
+import { ThemeContext } from "../others/themeContext";
 
 function UserParticipation() {
+  const { theme } = useContext(ThemeContext);
   const { userPresence, totalUsers } = UserPresenceFetch();
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -18,15 +21,15 @@ function UserParticipation() {
     },
   };
   const alwaysPresent = userPresence.filter(
-    (user) => parseInt(user.nb_absence) === 0
+    (user) => Number.parseInt(user.nb_absence) === 0
   ).length;
 
   const oneAbsence = userPresence.filter(
-    (user) => parseInt(user.nb_absence) === 1
+    (user) => Number.parseInt(user.nb_absence) === 1
   ).length;
 
   const twoAbsence = userPresence.filter(
-    (user) => parseInt(user.nb_absence) === 2
+    (user) => Number.parseInt(user.nb_absence) === 2
   ).length;
 
   return (
@@ -37,8 +40,18 @@ function UserParticipation() {
         animate="visible"
         className="lg:col-span-2 space-y-6"
       >
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-lg font-semibold text-[#2a6b5d] mb-4">
+        <div
+          className={`rounded-xl shadow-md p-6 ${
+            theme === "dark"
+              ? "bg-slate-800/95 border border-slate-700/50"
+              : "bg-white"
+          }`}
+        >
+          <h2
+            className={`text-lg font-semibold mb-4 ${
+              theme === "dark" ? "text-cyan-400" : "text-[#2a6b5d]"
+            }`}
+          >
             Statistiques de participation
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

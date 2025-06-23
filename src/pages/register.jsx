@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 /* eslint-disable no-unused-vars */
 import { motion } from "framer-motion";
-import { CheckCircle, ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, ChevronLeft } from "lucide-react";
 import Input from "../components/inputs/input";
 import RegisterFetch from "../hook/registerFetch";
+import { ThemeContext } from "../components/others/themeContext";
 
 function Register() {
+  const { theme } = useContext(ThemeContext);
   const {
     firstname,
     setFirstname,
@@ -54,10 +56,18 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden ${
+        theme === "dark"
+          ? "bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900"
+          : "bg-gradient-to-br from-blue-50 via-white to-blue-100"
+      }`}
+    >
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-blue-100 opacity-60"
+          className={`absolute -right-16 -top-16 w-64 h-64 rounded-full opacity-60 ${
+            theme === "dark" ? "bg-cyan-500/20" : "bg-blue-100"
+          }`}
           animate={{
             scale: [1, 1.1, 1],
             opacity: [0.6, 0.4, 0.6],
@@ -69,7 +79,9 @@ function Register() {
           }}
         />
         <motion.div
-          className="absolute left-1/4 bottom-1/4 w-96 h-96 rounded-full bg-blue-200 opacity-40"
+          className={`absolute left-1/4 bottom-1/4 w-96 h-96 rounded-full opacity-40 ${
+            theme === "dark" ? "bg-blue-500/20" : "bg-blue-200"
+          }`}
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.4, 0.2, 0.4],
@@ -85,7 +97,13 @@ function Register() {
 
       <div className="relative z-10 flex flex-col md:flex-row min-h-screen">
         {/* Partie gauche (affiché uniquement à partir de la taille md) */}
-        <div className="hidden md:flex w-1/2 flex-col items-center justify-center bg-gradient-to-br from-[#00ADE1]/90 to-[#17428C]/90 text-white p-10 relative">
+        <div
+          className={`hidden md:flex w-1/2 flex-col items-center justify-center text-white p-10 relative ${
+            theme === "dark"
+              ? "bg-gradient-to-br from-slate-800/95 to-gray-800/95"
+              : "bg-gradient-to-br from-[#00ADE1]/90 to-[#17428C]/90"
+          }`}
+        >
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -94,7 +112,11 @@ function Register() {
           >
             <a
               href="/"
-              className="flex items-center gap-2 text-white hover:text-blue-100 transition-colors"
+              className={`flex items-center gap-2 transition-colors ${
+                theme === "dark"
+                  ? "text-cyan-300 hover:text-cyan-200"
+                  : "text-white hover:text-blue-100"
+              }`}
             >
               <ChevronLeft size={20} />
               <span>Retour à l'accueil</span>
@@ -169,7 +191,11 @@ function Register() {
                     variants={itemVariants}
                     className="flex items-center gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-blue-200 flex-shrink-0" />
+                    <CheckCircle
+                      className={`h-5 w-5 flex-shrink-0 ${
+                        theme === "dark" ? "text-cyan-300" : "text-blue-200"
+                      }`}
+                    />
                     <span>{item}</span>
                   </motion.li>
                 ))}
@@ -178,14 +204,22 @@ function Register() {
               {/* Connexion */}
               <div className="mt-10 w-full">
                 <div className="border-t border-white/20 pt-6 text-center">
-                  <p className="text-sm text-blue-100">
+                  <p
+                    className={`text-sm ${
+                      theme === "dark" ? "text-cyan-200" : "text-blue-100"
+                    }`}
+                  >
                     Vous avez déjà un compte ?
                   </p>
                   <motion.a
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
                     href="/login"
-                    className="inline-block mt-2 px-6 py-2 text-white hover:bg-white hover:text-[#17428C] border border-white rounded-xl transition duration-300"
+                    className={`inline-block mt-2 px-6 py-2 border rounded-xl transition duration-300 ${
+                      theme === "dark"
+                        ? "text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-200 border-cyan-400"
+                        : "text-white hover:bg-white hover:text-[#17428C] border-white"
+                    }`}
                   >
                     Connectez-vous
                   </motion.a>
@@ -196,14 +230,27 @@ function Register() {
         </div>
 
         {/* Partie mobile uniquement (image + welcome back) */}
-        <div className="md:hidden flex flex-col items-center pt-10 pb-6 bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white">
+        <div
+          className={`md:hidden flex flex-col items-center pt-10 pb-6 text-white ${
+            theme === "dark"
+              ? "bg-gradient-to-r from-slate-800 to-gray-800"
+              : "bg-gradient-to-r from-[#00ADE1] to-[#17428C]"
+          }`}
+        >
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="absolute top-4 left-4"
           >
-            <a href="/" className="flex items-center gap-1 text-white text-sm">
+            <a
+              href="/"
+              className={`flex items-center gap-1 transition-colors text-sm ${
+                theme === "dark"
+                  ? "text-cyan-300 hover:text-cyan-200"
+                  : "text-white hover:text-blue-100"
+              }`}
+            >
               <ChevronLeft size={16} />
               <span>Retour</span>
             </a>
@@ -229,7 +276,9 @@ function Register() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-sm text-center px-6 mt-2 text-blue-100"
+            className={`text-sm text-center px-6 mt-2 ${
+              theme === "dark" ? "text-cyan-200" : "text-blue-100"
+            }`}
           >
             Créez votre compte pour accéder à toutes nos fonctionnalités
           </motion.p>
@@ -241,26 +290,46 @@ function Register() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8"
+            className={`w-full max-w-md backdrop-blur-sm rounded-2xl shadow-xl p-8 ${
+              theme === "dark"
+                ? "bg-slate-800/95 border border-slate-700/50"
+                : "bg-white/90"
+            }`}
           >
             {/* Indicateur de progression */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-bold text-gray-800">
+                <h2
+                  className={`text-xl font-bold ${
+                    theme === "dark" ? "text-white" : "text-gray-800"
+                  }`}
+                >
                   {currentStep === 1
                     ? "Informations personnelles"
                     : "Finalisez votre inscription"}
                 </h2>
-                <span className="text-sm text-gray-500">
+                <span
+                  className={`text-sm ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
                   Étape {currentStep}/{totalSteps}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className={`w-full rounded-full h-2 ${
+                  theme === "dark" ? "bg-gray-700" : "bg-gray-200"
+                }`}
+              >
                 <motion.div
                   initial={{ width: "50%" }}
                   animate={{ width: currentStep === 1 ? "50%" : "100%" }}
                   transition={{ duration: 0.3 }}
-                  className="bg-gradient-to-r from-[#00ADE1] to-[#17428C] h-2 rounded-full"
+                  className={`h-2 rounded-full ${
+                    theme === "dark"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600"
+                      : "bg-gradient-to-r from-[#00ADE1] to-[#17428C]"
+                  }`}
                 ></motion.div>
               </div>
             </div>
@@ -278,21 +347,33 @@ function Register() {
                     label="Nom"
                     value={lastname}
                     onChange={setLastname}
-                    className="bg-gray-50 border-gray-200 focus:border-blue-500 rounded-xl"
+                    className={`rounded-xl ${
+                      theme === "dark"
+                        ? "bg-gray-700 border-gray-600 focus:border-cyan-400 text-white"
+                        : "bg-gray-50 border-gray-200 focus:border-blue-500"
+                    }`}
                   />
                   <Input
                     placeholder="Entrez votre prénom..."
                     label="Prénom"
                     value={firstname}
                     onChange={setFirstname}
-                    className="bg-gray-50 border-gray-200 focus:border-blue-500 rounded-xl"
+                    className={`rounded-xl ${
+                      theme === "dark"
+                        ? "bg-gray-700 border-gray-600 focus:border-cyan-400 text-white"
+                        : "bg-gray-50 border-gray-200 focus:border-blue-500"
+                    }`}
                   />
                   <Input
                     placeholder="Entrez votre SGID..."
                     label="SGID"
                     value={sgid}
                     onChange={setSgid}
-                    className="bg-gray-50 border-gray-200 focus:border-blue-500 rounded-xl"
+                    className={`rounded-xl ${
+                      theme === "dark"
+                        ? "bg-gray-700 border-gray-600 focus:border-cyan-400 text-white"
+                        : "bg-gray-50 border-gray-200 focus:border-blue-500"
+                    }`}
                   />
                 </div>
 
@@ -303,7 +384,9 @@ function Register() {
                   disabled={!isStep1Valid()}
                   className={`w-full mt-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                     isStep1Valid()
-                      ? "bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white shadow-md hover:shadow-lg"
+                      ? theme === "dark"
+                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md hover:shadow-lg"
+                        : "bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white shadow-md hover:shadow-lg"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
                 >
@@ -324,7 +407,11 @@ function Register() {
                     type="email"
                     value={mail}
                     onChange={setMail}
-                    className="bg-gray-50 border-gray-200 focus:border-blue-500 rounded-xl"
+                    className={`rounded-xl ${
+                      theme === "dark"
+                        ? "bg-gray-700 border-gray-600 focus:border-cyan-400 text-white"
+                        : "bg-gray-50 border-gray-200 focus:border-blue-500"
+                    }`}
                   />
 
                   <div className="relative">
@@ -333,7 +420,11 @@ function Register() {
                       label="Mot de passe"
                       value={password}
                       onChange={setPassword}
-                      className="bg-gray-50 border-gray-200 focus:border-blue-500 rounded-xl pr-10"
+                      className={`rounded-xl pr-10 ${
+                        theme === "dark"
+                          ? "bg-gray-700 border-gray-600 focus:border-cyan-400 text-white"
+                          : "bg-gray-50 border-gray-200 focus:border-blue-500"
+                      }`}
                     />
                   </div>
 
@@ -343,7 +434,11 @@ function Register() {
                       label="Confirmer le mot de passe"
                       value={confirmPassword}
                       onChange={setConfirmPassword}
-                      className="bg-gray-50 border-gray-200 focus:border-blue-500 rounded-xl pr-10"
+                      className={`rounded-xl pr-10 ${
+                        theme === "dark"
+                          ? "bg-gray-700 border-gray-600 focus:border-cyan-400 text-white"
+                          : "bg-gray-50 border-gray-200 focus:border-blue-500"
+                      }`}
                     />
                   </div>
                 </div>
@@ -352,7 +447,11 @@ function Register() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-red-500 text-center mt-3 text-sm bg-red-50 p-2 rounded-lg"
+                    className={`text-center mt-3 text-sm p-2 rounded-lg ${
+                      theme === "dark"
+                        ? "text-red-300 bg-red-900/20"
+                        : "text-red-500 bg-red-50"
+                    }`}
                   >
                     {error}
                   </motion.div>
@@ -363,7 +462,11 @@ function Register() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentStep(1)}
-                    className="w-1/3 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300"
+                    className={`w-1/3 py-3 rounded-xl font-medium transition-all duration-300 ${
+                      theme === "dark"
+                        ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    }`}
                   >
                     Retour
                   </motion.button>
@@ -371,7 +474,11 @@ function Register() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleRegister}
-                    className="w-2/3 py-3 bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                    className={`w-2/3 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 ${
+                      theme === "dark"
+                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
+                        : "bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white"
+                    }`}
                   >
                     S'inscrire
                   </motion.button>
@@ -385,13 +492,27 @@ function Register() {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="block md:hidden mt-6 text-center"
             >
-              <div className="border-t border-gray-200 pt-6 text-center">
-                <p className="text-sm text-gray-600">
+              <div
+                className={`pt-6 text-center ${
+                  theme === "dark"
+                    ? "border-t border-gray-600"
+                    : "border-t border-gray-200"
+                }`}
+              >
+                <p
+                  className={`text-sm ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
                   Vous avez déjà un compte ?
                 </p>
                 <a
                   href="/login"
-                  className="inline-block mt-2 px-6 py-2 text-[#17428C] hover:text-white hover:bg-[#17428C] border border-[#17428C] rounded-xl transition duration-300"
+                  className={`inline-block mt-2 px-6 py-2 border rounded-xl transition duration-300 ${
+                    theme === "dark"
+                      ? "text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 border-cyan-400"
+                      : "text-[#17428C] hover:text-white hover:bg-[#17428C] border-[#17428C]"
+                  }`}
                 >
                   Connectez-vous
                 </a>

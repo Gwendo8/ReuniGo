@@ -430,8 +430,100 @@ app.delete("/admin-delete/:id", async (req, res) => {
   }
 });
 
-////////////////// REUNIONS
+// récupération des informations de l'utilisateur connecté
+app.get("/user-info/:id", async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
 
+  if (userId === null || userId === undefined) {
+    return res.status(400).json({ message: "ID utilisateur manquant" });
+  }
+  try {
+    const result = await pool.query(
+      `SELECT id, firstname, lastname, mail, password FROM public."Users" WHERE id =$1`,
+      [userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des informations de l'utilisateur",
+      error
+    );
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// modification des informations de l'utilisateur connecté
+app.put("/update-user-info/:id", async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const { firstname, lastname, mail, password } = req.body;
+  try {
+    let hashedPassword;
+    // si un nouveau mot de passe a été fourni
+    if (password && password.trim() !== "") {
+      // je hash ce mot de passe
+      hashedPassword = await bcrypt.hash(password, 10);
+    } else {
+      // sinon je récupère l'ancien
+      const userResult = await pool.query(
+        `SELECT password FROM public."Users" WHERE id = $1`,
+        [userId]
+      );
+      // si l'utilisateur n'existe pas on renvoie une erreur 404
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      // on garde l'ancien mot de passe
+      hashedPassword = userResult.rows[0].password;
+    }
+    const result = await pool.query(
+      `UPDATE public."Users" SET firstname = $1, lastname = $2, mail = $3, password = $4 WHERE id = $5 RETURNING *`,
+      [firstname, lastname, mail, hashedPassword, userId]
+    );
+    const updatedUser = result.rows[0];
+    // Récupérer le rôle de l'utilisateur
+    // Je récupère le rôle pour permettre le rafraîchissement de la page correctement quand un utilisateur modifie ses infos personnelles
+    // Je m'explqique :
+    // Si je ne récupère pas le rôle et que l'utilsateur est admin par exemple
+    // Quand il va modifier une de ses informations personnelles avec le refresh il ne pourra plus voir les liens vers la page admin et la page stat
+    // Car dans le nouveau token le rôle ne sera pas présent et que ses pages ne sont accessibles que pour les personnes qui ont le rôle admin
+    const roleResult = await pool.query(
+      `SELECT r.name as rolename 
+       FROM public."Users" u 
+       JOIN public."Roles" r ON u.idrole = r.id 
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    if (roleResult.rows.length === 0) {
+      return res.status(404).json({ message: "Rôle non trouvé" });
+    }
+
+    const newToken = jwt.sign(
+      {
+        id: updatedUser.id,
+        firstname: updatedUser.firstname,
+        lastname: updatedUser.lastname,
+        mail: updatedUser.mail,
+        rolename: roleResult.rows[0].rolename,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    // et je renvoie le nouveau token dans la réponse
+    res.status(200).json({
+      message: "Utilisateur modifié avec succès",
+      token: newToken,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération du mot de passe", error);
+    return res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+////////////////// REUNIONS
 // récupéreation des réunions
 app.get("/meetings", async (req, res) => {
   const userId = req.query.id;
@@ -1066,9 +1158,9 @@ app.get("/nb-meetings", async (req, res) => {
     // et pour le dernier on va compter le nombre de réunion qui sera supérieur à la date actuelle
     const meetingStats = await pool.query(`
       SELECT 
-        COUNT(*) FILTER (WHERE date < CURRENT_DATE) AS past_meetings, 
-        COUNT(*) FILTER (WHERE date::date = CURRENT_DATE) AS ongoing_meetings,
-        COUNT(*) FILTER (WHERE date > CURRENT_DATE) AS future_meetings
+        COUNT(*) FILTER (WHERE date + (time || ' minutes')::interval < CURRENT_TIMESTAMP) AS past_meetings, 
+        COUNT(*) FILTER (WHERE date <= CURRENT_TIMESTAMP AND date + (time || ' minutes')::interval >= CURRENT_TIMESTAMP) AS ongoing_meetings,
+        COUNT(*) FILTER (WHERE date > CURRENT_TIMESTAMP) AS future_meetings
       FROM public."Meetings";
     `);
     // La je récupère le taux de participation globale aux réunions
@@ -1079,6 +1171,7 @@ app.get("/nb-meetings", async (req, res) => {
     // et je divise le tout par le nombre total de réunion
     // NULLIF permet d'éviter la division par zéro
     // donc si le nombre de réunion est égal à 0 alors je renvoie NULL
+    // si j'avais mit 5 par exemple à la place de 0 sa aurait renvoyé null si le nombre de réunion est égal à 5
     const participationStats = await pool.query(`
       SELECT 
         ROUND(

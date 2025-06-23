@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
+import { useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaSearch } from "react-icons/fa";
+import { ThemeContext } from "../others/themeContext";
 
 function AddTeamMembers({
   showAddMembers,
@@ -10,17 +12,27 @@ function AddTeamMembers({
   searchTerm,
   setSearchTerm,
 }) {
+  const { theme } = useContext(ThemeContext);
+
   return (
     <>
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3
+          className={`text-lg font-semibold ${
+            theme === "dark" ? "text-gray-200" : "text-gray-800"
+          }`}
+        >
           Membres de l'équipe
         </h3>
         <button
           onClick={() => setShowAddMembers(!showAddMembers)}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
             showAddMembers
-              ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+              ? theme === "dark"
+                ? "bg-blue-900/50 text-blue-300 hover:bg-blue-900/70"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+              : theme === "dark"
+              ? "bg-blue-600 text-white hover:bg-blue-700"
               : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
         >
@@ -44,43 +56,85 @@ function AddTeamMembers({
             transition={{ duration: 0.3 }}
             className="overflow-hidden mb-3"
           >
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3">
+            <div
+              className={`border rounded-lg p-3 mb-3 ${
+                theme === "dark"
+                  ? "bg-blue-900/20 border-blue-800"
+                  : "bg-blue-50 border-blue-100"
+              }`}
+            >
               <div className="relative mb-3">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
+                    theme === "dark" ? "text-gray-500" : "text-gray-400"
+                  }`}
+                />
                 <input
                   type="text"
                   placeholder="Rechercher un utilisateur..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                    theme === "dark"
+                      ? "bg-slate-700 border-slate-600 text-gray-200 placeholder-gray-400"
+                      : "text-black border-gray-300"
+                  }`}
                 />
               </div>
-              <div className="max-h-[150px] overflow-y-auto bg-white rounded-lg border border-gray-200">
+              <div
+                className={`max-h-[150px] overflow-y-auto rounded-lg border ${
+                  theme === "dark"
+                    ? "bg-slate-700 border-slate-600"
+                    : "bg-white border-gray-200"
+                }`}
+              >
                 {availableUsers.length > 0 ? (
                   availableUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      className={`flex items-center justify-between p-2 border-b last:border-b-0 ${
+                        theme === "dark"
+                          ? "hover:bg-slate-600 border-slate-600"
+                          : "hover:bg-gray-50 border-gray-100"
+                      }`}
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            theme === "dark"
+                              ? "bg-blue-900/50 text-blue-300"
+                              : "bg-blue-100 text-blue-600"
+                          }`}
+                        >
                           {user.firstname[0]}
                           {user.lastname[0]}
                         </div>
-                        <span className="text-black">
+                        <span
+                          className={
+                            theme === "dark" ? "text-gray-200" : "text-black"
+                          }
+                        >
                           {user.firstname} {user.lastname}
                         </span>
                       </div>
                       <button
                         onClick={() => onAddMember(user)}
-                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded-full"
+                        className={`p-1.5 rounded-full ${
+                          theme === "dark"
+                            ? "text-blue-400 hover:text-blue-300 hover:bg-blue-900/50"
+                            : "text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        }`}
                       >
                         <FaPlus size={14} />
                       </button>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-center py-4">
+                  <p
+                    className={`text-center py-4 ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     {searchTerm
                       ? "Aucun utilisateur trouvé"
                       : "Tous les utilisateurs sont déjà membres"}
