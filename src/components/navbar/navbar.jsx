@@ -84,11 +84,9 @@ function Navbar() {
       {/* Logo et Titre */}
       <div className="flex items-center gap-2 sm:gap-4">
         <img
-          src="/img/logo-saint-gobain.png"
+          src="/img/logo.png"
           alt="Logo"
-          className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain ${
-            theme === "dark" ? "filter invert" : ""
-          }`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain`}
         />
         <h1
           className={`text-lg sm:text-xl md:text-2xl text-transparent bg-clip-text ${

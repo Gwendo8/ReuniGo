@@ -29,7 +29,7 @@ function UserParticipation() {
   ).length;
 
   const twoAbsence = userPresence.filter(
-    (user) => Number.parseInt(user.nb_absence) === 2
+    (user) => Number.parseInt(user.nb_absence) >= 2
   ).length;
 
   return (

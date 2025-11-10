@@ -1,5 +1,3 @@
-"use client";
-
 import { useContext } from "react";
 import UserPresenceFetch from "../../hook/statistic/userPresenceFetch";
 import CamembertStat from "./camembertStat";
@@ -16,7 +14,7 @@ function NbPresence() {
     (user) => Number.parseInt(user.nb_absence) === 1
   ).length;
   const twoAbsence = userPresence.filter(
-    (user) => Number.parseInt(user.nb_absence) === 2
+    (user) => Number.parseInt(user.nb_absence) >= 2
   ).length;
 
   const donutData = [

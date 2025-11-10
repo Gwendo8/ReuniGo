@@ -65,11 +65,9 @@ function Home() {
                 rotate: [0, -5, 5, -5, 0],
                 transition: { duration: 0.5 },
               }}
-              src="/img/logo-saint-gobain.png"
+              src="/img/logo.png"
               alt="Logo"
-              className={`w-16 h-16 object-contain ${
-                theme === "dark" ? "filter invert" : ""
-              }`}
+              className={`w-16 h-16 object-contain `}
             />
             <h1
               className={`text-2xl font-sans bg-clip-text text-transparent ${
@@ -226,11 +224,9 @@ function Home() {
               className="flex justify-center mb-6"
             >
               <img
-                src="/img/logo-saint-gobain.png"
+                src="/img/logo.png"
                 alt="Logo App"
-                className={`w-28 h-28 object-contain ${
-                  theme === "dark" ? "filter invert" : ""
-                }`}
+                className={`w-28 h-28 object-contain`}
               />
             </motion.div>
             <div className="text-center mb-6 space-y-3">

@@ -55,7 +55,6 @@ function UpdateUserFetch(onSuccess) {
           }
         }
       }
-
       // on appelle handleCloseCard pour déclencher le raffraichissement
       handleCloseCard();
       // si une fonction de succès à été passé en paramètre, on l'appelle

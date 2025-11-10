@@ -1113,7 +1113,6 @@ app.get("/users-presence", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
 // récupération des utilisateurs avec le plus d'absences aux réunion
 app.get("/users-top-absences", async (req, res) => {
   try {
@@ -1147,7 +1146,6 @@ app.get("/users-nb-roles", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
 // récupération du nombre de réunion
 app.get("/nb-meetings", async (req, res) => {
   try {
