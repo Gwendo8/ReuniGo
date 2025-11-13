@@ -31,11 +31,15 @@ app.use(
 );
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+pool.query("SELECT NOW()", (err, res) => {
+  if (err) console.error("❌ Erreur connexion Neon :", err);
+  else console.log("✅ Connexion Neon OK :", res.rows[0]);
 });
 
 // clé token JWT
@@ -43,7 +47,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 //clé api pour l'envoi d'email
 sgMail.setApiKey(process.env.SENDGRID_API);
-console.log("Clé SENDGRID_API lue :", process.env.SENDGRID_API);
 
 // route pour envoyer un mail de la page contact
 app.post("/send-email", async (req, res) => {
@@ -1192,7 +1195,8 @@ app.get("/nb-meetings", async (req, res) => {
   }
 });
 
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
+
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);
 });
