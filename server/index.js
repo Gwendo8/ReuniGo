@@ -48,6 +48,10 @@ const JWT_SECRET = process.env.JWT_SECRET;
 //clé api pour l'envoi d'email
 sgMail.setApiKey(process.env.SENDGRID_API);
 
+app.get("/", (req, res) => {
+  res.send("API ReuniGo OK");
+});
+
 // route pour envoyer un mail de la page contact
 app.post("/send-email", async (req, res) => {
   const { name, email, subject, message } = req.body;
