@@ -7,7 +7,7 @@ function ShowInfosTeamFetch() {
 
   const showInfoTeam = async (teamId) => {
     try {
-      const response = await axios.get(`http://localhost:8000/teams/${teamId}`);
+      const response = await axios.get(`http://localhost:8001/teams/${teamId}`);
       setInfoTeam(response.data);
       console.log("reponse du click sur une équipe : ", response.data);
     } catch (error) {

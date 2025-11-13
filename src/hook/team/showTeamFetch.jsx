@@ -8,7 +8,7 @@ function ShowTeamFetch() {
 
   const showTeams = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:8000/teams");
+      const response = await axios.get("http://localhost:8001/teams");
       setLoading(false);
       setTeams(response.data);
       console.log(response.data);

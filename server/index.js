@@ -10,6 +10,9 @@ import fs from "fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import sgMail from "@sendgrid/mail";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,20 +31,19 @@ app.use(
 );
 
 const pool = new Pool({
-  host: "localhost",
-  user: "postgres",
-  password: "azerty",
-  database: "Carder",
-  port: 5432,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
 });
 
 // clé token JWT
-const JWT_SECRET = "votre_cle_secrete";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 //clé api pour l'envoi d'email
-sgMail.setApiKey(
-  "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"
-);
+sgMail.setApiKey(process.env.SENDGRID_API);
+console.log("Clé SENDGRID_API lue :", process.env.SENDGRID_API);
 
 // route pour envoyer un mail de la page contact
 app.post("/send-email", async (req, res) => {

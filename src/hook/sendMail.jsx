@@ -17,7 +17,7 @@ function SendMail() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8000/send-email", form);
+      await axios.post("http://localhost:8001/send-email", form);
       setSubmitStatus("success");
       setForm({
         name: "",

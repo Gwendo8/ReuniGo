@@ -10,7 +10,7 @@ function NbRoleUserFetch() {
     const fetchDataNbRoleUser = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/users-nb-roles"
+          "http://localhost:8001/users-nb-roles"
         );
         setLoading(false);
         setNbRoleUser(response.data);

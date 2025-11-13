@@ -11,7 +11,7 @@ function ForgotPasswordFetch() {
   const handleSubmit = async () => {
     try {
       const response = await axios.post(
-        `http://localhost:8000/forgot-password`,
+        `http://localhost:8001/forgot-password`,
         { mail }
       );
       console.log("Réponse axios :", response.data);

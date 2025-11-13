@@ -23,10 +23,10 @@ function UserMeetingFetch(initialMeetingId = null) {
       try {
         console.log("ID de la réunion pour la requête : ", idToFetch);
         const response = await axios.get(
-          `http://localhost:8000/users-meeting/${idToFetch}`
+          `http://localhost:8001/users-meeting/${idToFetch}`
         );
         const filesResponse = await axios.get(
-          `http://localhost:8000/files-meeting/${idToFetch}`
+          `http://localhost:8001/files-meeting/${idToFetch}`
         );
         setUserMeeting(response.data);
         setFiles(filesResponse.data);
@@ -58,7 +58,7 @@ function UserMeetingFetch(initialMeetingId = null) {
 
     try {
       const response = await axios.patch(
-        `http://localhost:8000/users-meeting/${currentMeetingId}/${userId}`, // on a l'id de la réunion et l'id du participant dont on veut changer la présence
+        `http://localhost:8001/users-meeting/${currentMeetingId}/${userId}`, // on a l'id de la réunion et l'id du participant dont on veut changer la présence
         // la j'envoie un objet JSON avec une seule clé et sa valeur qui est un booléen
         // donc ici la présence de l'utilisateur à la réunion
         { is_present: isPresent }

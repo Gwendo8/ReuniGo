@@ -24,7 +24,7 @@ function useUpdateTeamFetch({ team }) {
     const showUsers = async () => {
       try {
         const usersReponse = await axios.get(
-          `http://localhost:8000/usersmeeting`
+          `http://localhost:8001/usersmeeting`
         );
         setUsers(usersReponse.data);
         console.log(
@@ -63,7 +63,7 @@ function useUpdateTeamFetch({ team }) {
       ) {
         setLoading(true);
         const response = await axios.put(
-          `http://localhost:8000/update-team/${id}`,
+          `http://localhost:8001/update-team/${id}`,
           {
             teamName,
             colors,

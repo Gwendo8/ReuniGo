@@ -14,7 +14,7 @@ function DeleteTeamFetch() {
 
     try {
       const response = await axios.delete(
-        `http://localhost:8000/delete-team/${id}`
+        `http://localhost:8001/delete-team/${id}`
       );
       console.log("Suppression réussie", response.data);
       handleCloseCard();

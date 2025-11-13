@@ -20,8 +20,8 @@ function AddMeetingFetch() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const usersRes = await axios.get("http://localhost:8000/usersmeeting");
-        const teamsRes = await axios.get("http://localhost:8000/teams");
+        const usersRes = await axios.get("http://localhost:8001/usersmeeting");
+        const teamsRes = await axios.get("http://localhost:8001/teams");
 
         const usersData = usersRes.data.map((user) => ({
           ...user,
@@ -93,7 +93,7 @@ function AddMeetingFetch() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/add-meeting",
+        "http://localhost:8001/add-meeting",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

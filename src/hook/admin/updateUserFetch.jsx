@@ -27,7 +27,7 @@ function UpdateUserFetch(onSuccess) {
     }
     try {
       const response = await axios.put(
-        `http://localhost:8000/admin-update/${id}`,
+        `http://localhost:8001/admin-update/${id}`,
         {
           firstname,
           lastname,

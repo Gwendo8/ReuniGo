@@ -10,7 +10,7 @@ function UserTopAbsenceFetch() {
     const fetchDataTopAbsence = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/users-top-absences"
+          "http://localhost:8001/users-top-absences"
         );
         setLoading(false);
         setTopAbsence(response.data);

@@ -17,7 +17,7 @@ function DeleteMeetingFetch() {
 
     try {
       const response = await axios.delete(
-        `http://localhost:8000/delete-meeting/${id}?userId=${userId}&role=${role}`
+        `http://localhost:8001/delete-meeting/${id}?userId=${userId}&role=${role}`
       );
       console.log("Suppression réussie", response.data);
       handleCloseCard();

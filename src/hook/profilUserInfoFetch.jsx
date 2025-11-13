@@ -12,7 +12,7 @@ function ProfilUserInfoFetch() {
     setError("");
     try {
       const response = await axios.get(
-        `http://localhost:8000/user-info/${userId}`
+        `http://localhost:8001/user-info/${userId}`
       );
       setUserInfo(response.data);
       console.log("Informations utilisateur récupérées : ", response.data);

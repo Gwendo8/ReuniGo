@@ -21,7 +21,7 @@ function RegisterFetch() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8000/register", {
+      const response = await axios.post("http://localhost:8001/register", {
         firstname,
         lastname,
         mail,

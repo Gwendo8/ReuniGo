@@ -18,7 +18,7 @@ function CreateUserFetch() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8000/admin-create", {
+      const response = await axios.post("http://localhost:8001/admin-create", {
         firstname,
         lastname,
         mail,

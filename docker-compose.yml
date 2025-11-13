@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: carder-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: azerty
+      POSTGRES_DB: Carder
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - carder-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: carder-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - carder-network
+
+  backend:
+    build: ./server
+    container_name: carder-backend
+    restart: always
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - db
+    networks:
+      - carder-network
+
+  frontend:
+    build: ./
+    container_name: carder-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - carder-network
+
+networks:
+  carder-network:
+
+volumes:
+  pgdata:

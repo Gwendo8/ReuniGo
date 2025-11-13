@@ -40,7 +40,7 @@ function UpdateProfilUserFetch({ user }) {
     try {
       setLoading(true);
       const response = await axios.put(
-        `http://localhost:8000/update-user-info/${id}`,
+        `http://localhost:8001/update-user-info/${id}`,
         {
           firstname,
           lastname,
