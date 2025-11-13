@@ -7,8 +7,6 @@ RUN npm install
 
 COPY . .
 
-RUN mkdir -p /app/uploads
-
-EXPOSE 8000
+ENV PORT=10000
 
 CMD ["node", "index.js"]
