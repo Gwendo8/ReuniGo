@@ -9,4 +9,6 @@ COPY . .
 
 ENV PORT=10000
 
+EXPOSE 10000
+
 CMD ["node", "index.js"]
