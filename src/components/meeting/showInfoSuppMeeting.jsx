@@ -323,7 +323,7 @@ function ShowInfoSuppMeeting({ closePopup, meetingId }) {
                                 // encodeURI component permet d'encoder le nom du fichier pour éviter les problèmes de caractères spéciaux
                                 // le nom du fichier qui est passé avec le file.name
                                 // du coup ici sa envoie une requêtes GET à l'api de la route download-file pour télécharger le fichier
-                                href={`http://localhost:8001/download-file/${encodeURIComponent(
+                                href={`https://reunigo.onrender.com/download-file/${encodeURIComponent(
                                   file.name
                                 )}`}
                                 // permet d'ouvrir le lien dans une nouvelle fenêtre

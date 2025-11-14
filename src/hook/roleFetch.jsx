@@ -8,7 +8,7 @@ function RoleFetch() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch("http://localhost:8001/roles");
+        const response = await fetch("https://reunigo.onrender.com/roles");
         const data = await response.json();
         setRole(data);
         setLoading(false);

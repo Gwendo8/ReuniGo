@@ -21,14 +21,17 @@ function RegisterFetch() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8001/register", {
-        firstname,
-        lastname,
-        mail,
-        sgid,
-        password,
-        confirmPassword,
-      });
+      const response = await axios.post(
+        "https://reunigo.onrender.com/register",
+        {
+          firstname,
+          lastname,
+          mail,
+          sgid,
+          password,
+          confirmPassword,
+        }
+      );
       console.log("Connexion réussi", response.data);
       navigate("/login"); // ✅ redirection
     } catch (error) {

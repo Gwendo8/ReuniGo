@@ -10,7 +10,9 @@ function NbMeetingFetch() {
   useEffect(() => {
     const fetchDateNbMeeting = async () => {
       try {
-        const response = await axios.get("http://localhost:8001/nb-meetings");
+        const response = await axios.get(
+          "https://reunigo.onrender.com/nb-meetings"
+        );
         setNbMeeting(response.data.meetingStats);
         setRateMeetings(response.data.participationStats);
         setLoading(false);

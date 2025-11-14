@@ -17,7 +17,7 @@ function DeleteMeetingFetch() {
 
     try {
       const response = await axios.delete(
-        `http://localhost:8001/delete-meeting/${id}?userId=${userId}&role=${role}`
+        `https://reunigo.onrender.com/delete-meeting/${id}?userId=${userId}&role=${role}`
       );
       console.log("Suppression réussie", response.data);
       handleCloseCard();

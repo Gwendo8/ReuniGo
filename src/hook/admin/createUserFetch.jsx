@@ -18,14 +18,17 @@ function CreateUserFetch() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:8001/admin-create", {
-        firstname,
-        lastname,
-        mail,
-        sgid,
-        idrole,
-        password,
-      });
+      const response = await axios.post(
+        "https://reunigo.onrender.com/admin-create",
+        {
+          firstname,
+          lastname,
+          mail,
+          sgid,
+          idrole,
+          password,
+        }
+      );
       console.log("Création réussie", response.data);
       if (onSuccess) {
         onSuccess();

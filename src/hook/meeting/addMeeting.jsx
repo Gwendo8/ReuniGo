@@ -20,8 +20,10 @@ function AddMeetingFetch() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const usersRes = await axios.get("http://localhost:8001/usersmeeting");
-        const teamsRes = await axios.get("http://localhost:8001/teams");
+        const usersRes = await axios.get(
+          "https://reunigo.onrender.com/usersmeeting"
+        );
+        const teamsRes = await axios.get("https://reunigo.onrender.com/teams");
 
         const usersData = usersRes.data.map((user) => ({
           ...user,
@@ -93,7 +95,7 @@ function AddMeetingFetch() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8001/add-meeting",
+        "https://reunigo.onrender.com/add-meeting",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

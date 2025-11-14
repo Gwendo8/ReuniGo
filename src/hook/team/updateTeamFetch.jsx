@@ -24,7 +24,7 @@ function useUpdateTeamFetch({ team }) {
     const showUsers = async () => {
       try {
         const usersReponse = await axios.get(
-          `http://localhost:8001/usersmeeting`
+          `https://reunigo.onrender.com/usersmeeting`
         );
         setUsers(usersReponse.data);
         console.log(
@@ -63,7 +63,7 @@ function useUpdateTeamFetch({ team }) {
       ) {
         setLoading(true);
         const response = await axios.put(
-          `http://localhost:8001/update-team/${id}`,
+          `https://reunigo.onrender.com/update-team/${id}`,
           {
             teamName,
             colors,

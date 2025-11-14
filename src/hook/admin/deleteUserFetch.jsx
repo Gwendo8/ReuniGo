@@ -10,7 +10,7 @@ function DeleteUserFetch() {
   const deleteUser = async (sgid, onSucess) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8001/admin-delete/${sgid}`
+        `https://reunigo.onrender.com/admin-delete/${sgid}`
       );
       console.log("Suppression réussie", response.data);
       handleCloseCard();

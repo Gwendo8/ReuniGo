@@ -9,7 +9,7 @@ function UserInfoFetch(refreshInfo) {
   useEffect(() => {
     setLoading(true);
     axios
-      .get("http://localhost:8001/users")
+      .get("https://reunigo.onrender.com/users")
       .then((response) => setData(response.data))
       .catch((error) => setError(error))
       .finally(() => setLoading(false));

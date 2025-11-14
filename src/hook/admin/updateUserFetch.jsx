@@ -27,7 +27,7 @@ function UpdateUserFetch(onSuccess) {
     }
     try {
       const response = await axios.put(
-        `http://localhost:8001/admin-update/${id}`,
+        `https://reunigo.onrender.com/admin-update/${id}`,
         {
           firstname,
           lastname,

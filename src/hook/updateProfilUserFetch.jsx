@@ -40,7 +40,7 @@ function UpdateProfilUserFetch({ user }) {
     try {
       setLoading(true);
       const response = await axios.put(
-        `http://localhost:8001/update-user-info/${id}`,
+        `https://reunigo.onrender.com/update-user-info/${id}`,
         {
           firstname,
           lastname,

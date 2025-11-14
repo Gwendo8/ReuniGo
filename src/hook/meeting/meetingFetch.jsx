@@ -11,7 +11,7 @@ function MeetingFetch() {
       const userId = localStorage.getItem("id");
       const role = localStorage.getItem("role");
       const response = await axios.get(
-        `http://localhost:8001/meetings?id=${userId}&role=${role}`
+        `https://reunigo.onrender.com/meetings?id=${userId}&role=${role}`
       );
       setMeeting(response.data);
     } catch (error) {

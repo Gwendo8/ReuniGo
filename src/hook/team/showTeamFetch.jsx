@@ -8,7 +8,7 @@ function ShowTeamFetch() {
 
   const showTeams = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:8001/teams");
+      const response = await axios.get("https://reunigo.onrender.com/teams");
       setLoading(false);
       setTeams(response.data);
       console.log(response.data);

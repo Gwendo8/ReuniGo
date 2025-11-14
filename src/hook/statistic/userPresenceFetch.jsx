@@ -11,7 +11,7 @@ function UserPresenceFetch() {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8001/users-presence"
+          "https://reunigo.onrender.com/users-presence"
         );
         setUserPresence(response.data.users);
         setTotalUsers(response.data.total_guest_users);

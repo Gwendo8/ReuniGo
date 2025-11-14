@@ -10,7 +10,7 @@ function UserTopAbsenceFetch() {
     const fetchDataTopAbsence = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8001/users-top-absences"
+          "https://reunigo.onrender.com/users-top-absences"
         );
         setLoading(false);
         setTopAbsence(response.data);
