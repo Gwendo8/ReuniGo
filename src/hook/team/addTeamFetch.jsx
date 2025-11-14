@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import jwtDecode from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { API } from "../../api";
 
 function AddTeamFetch() {
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ function AddTeamFetch() {
     // Récupération de la liste de tous les utilisateurs pour le sélecteur de membres
     const fetchUsers = async () => {
       try {
-        const usersRes = await axios.get(
-          "https://reunigo.onrender.com/usersmeeting"
-        );
+        const usersRes = await axios.get(`${API}/usersmeeting`);
         setUsers(usersRes.data);
       } catch (err) {
         console.error("Erreur lors de la récupération des utilisateurs:", err);
@@ -61,15 +60,12 @@ function AddTeamFetch() {
     // Extraire les IDs des membres sélectionnés
     const memberIds = selectedMembers.map((member) => member.id);
     try {
-      const response = await axios.post(
-        "https://reunigo.onrender.com/create-team",
-        {
-          teamName,
-          colors,
-          members: memberIds,
-          creatorId,
-        }
-      );
+      const response = await axios.post(`${API}/create-team`, {
+        teamName,
+        colors,
+        members: memberIds,
+        creatorId,
+      });
       console.log("Création d'équipe réussie", response.data);
       setTeamName("");
       setColors("");

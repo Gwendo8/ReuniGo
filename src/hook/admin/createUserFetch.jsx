@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API } from "../../api";
 
 function CreateUserFetch() {
   const navigate = useNavigate();
@@ -18,17 +19,14 @@ function CreateUserFetch() {
       return;
     }
     try {
-      const response = await axios.post(
-        "https://reunigo.onrender.com/admin-create",
-        {
-          firstname,
-          lastname,
-          mail,
-          sgid,
-          idrole,
-          password,
-        }
-      );
+      const response = await axios.post(`${API}/admin-create`, {
+        firstname,
+        lastname,
+        mail,
+        sgid,
+        idrole,
+        password,
+      });
       console.log("Création réussie", response.data);
       if (onSuccess) {
         onSuccess();

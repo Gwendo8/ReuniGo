@@ -15,6 +15,7 @@ import boxVariant from "../animation/boxVariant";
 import SearchBar from "../others/searchBar";
 import UserMeetingFetch from "../../hook/meeting/userMeetingFetch";
 import { ThemeContext } from "../others/themeContext";
+import { API } from "../../api";
 
 function ShowInfoSuppMeeting({ closePopup, meetingId }) {
   const { theme } = useContext(ThemeContext);
@@ -323,7 +324,7 @@ function ShowInfoSuppMeeting({ closePopup, meetingId }) {
                                 // encodeURI component permet d'encoder le nom du fichier pour éviter les problèmes de caractères spéciaux
                                 // le nom du fichier qui est passé avec le file.name
                                 // du coup ici sa envoie une requêtes GET à l'api de la route download-file pour télécharger le fichier
-                                href={`https://reunigo.onrender.com/download-file/${encodeURIComponent(
+                                href={`${API}/download-file/${encodeURIComponent(
                                   file.name
                                 )}`}
                                 // permet d'ouvrir le lien dans une nouvelle fenêtre

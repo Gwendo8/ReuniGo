@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API } from "../api";
 
 function RoleFetch() {
   const [role, setRole] = useState("");
@@ -8,7 +9,7 @@ function RoleFetch() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch("https://reunigo.onrender.com/roles");
+        const response = await fetch(`${API}/roles`);
         const data = await response.json();
         setRole(data);
         setLoading(false);

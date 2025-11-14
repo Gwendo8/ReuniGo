@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API } from "../api";
 
 function ForgotPasswordFetch() {
   const navigate = useNavigate();
@@ -10,10 +11,7 @@ function ForgotPasswordFetch() {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post(
-        `https://reunigo.onrender.com/forgot-password`,
-        { mail }
-      );
+      const response = await axios.post(`${API}/forgot-password`, { mail });
       console.log("Réponse axios :", response.data);
       setSubmitStatus("success");
       setError("");

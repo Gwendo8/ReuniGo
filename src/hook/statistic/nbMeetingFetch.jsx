@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { API } from "../../api";
 
 function NbMeetingFetch() {
   const [nbMeeting, setNbMeeting] = useState([]);
@@ -10,9 +11,7 @@ function NbMeetingFetch() {
   useEffect(() => {
     const fetchDateNbMeeting = async () => {
       try {
-        const response = await axios.get(
-          "https://reunigo.onrender.com/nb-meetings"
-        );
+        const response = await axios.get(`${API}/nb-meetings`);
         setNbMeeting(response.data.meetingStats);
         setRateMeetings(response.data.participationStats);
         setLoading(false);

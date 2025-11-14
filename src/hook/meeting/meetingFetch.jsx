@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState, useCallback } from "react";
+import { API } from "../../api";
 
 function MeetingFetch() {
   const [meeting, setMeeting] = useState([]);
@@ -11,7 +12,7 @@ function MeetingFetch() {
       const userId = localStorage.getItem("id");
       const role = localStorage.getItem("role");
       const response = await axios.get(
-        `https://reunigo.onrender.com/meetings?id=${userId}&role=${role}`
+        `${API}/meetings?id=${userId}&role=${role}`
       );
       setMeeting(response.data);
     } catch (error) {

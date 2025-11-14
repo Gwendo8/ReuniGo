@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState, useCallback } from "react";
+import { API } from "../api";
 
 function ProfilUserInfoFetch() {
   const [userInfo, setUserInfo] = useState(null);
@@ -11,9 +12,7 @@ function ProfilUserInfoFetch() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(
-        `https://reunigo.onrender.com/user-info/${userId}`
-      );
+      const response = await axios.get(`${API}/user-info/${userId}`);
       setUserInfo(response.data);
       console.log("Informations utilisateur récupérées : ", response.data);
     } catch (error) {

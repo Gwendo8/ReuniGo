@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API } from "../../api";
 
 function UserPresenceFetch() {
   const [userPresence, setUserPresence] = useState([]);
@@ -10,9 +11,7 @@ function UserPresenceFetch() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          "https://reunigo.onrender.com/users-presence"
-        );
+        const response = await axios.get(`${API}/users-presence`);
         setUserPresence(response.data.users);
         setTotalUsers(response.data.total_guest_users);
       } catch (err) {

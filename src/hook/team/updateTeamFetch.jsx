@@ -1,6 +1,7 @@
 import axios from "axios";
 import jwtDecode from "jwt-decode";
 import { useEffect, useState } from "react";
+import { API } from "../../api";
 
 function useUpdateTeamFetch({ team }) {
   const [error, setError] = useState("");
@@ -23,9 +24,7 @@ function useUpdateTeamFetch({ team }) {
   useEffect(() => {
     const showUsers = async () => {
       try {
-        const usersReponse = await axios.get(
-          `https://reunigo.onrender.com/usersmeeting`
-        );
+        const usersReponse = await axios.get(`${API}/usersmeeting`);
         setUsers(usersReponse.data);
         console.log(
           "Utilisateur dispo pour la modification d'une équipe : ",
@@ -62,15 +61,12 @@ function useUpdateTeamFetch({ team }) {
         (userRole === "MANAGER" && team?.leader_id === userId)
       ) {
         setLoading(true);
-        const response = await axios.put(
-          `https://reunigo.onrender.com/update-team/${id}`,
-          {
-            teamName,
-            colors,
-            leaderId,
-            members,
-          }
-        );
+        const response = await axios.put(`${API}/update-team/${id}`, {
+          teamName,
+          colors,
+          leaderId,
+          members,
+        });
         console.log(response.data);
         setLoading(false);
       } else {

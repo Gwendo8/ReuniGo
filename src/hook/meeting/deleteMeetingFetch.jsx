@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRefresh } from "../../components/others/refreshInfo";
 import axios from "axios";
+import { API } from "../../api";
 
 function DeleteMeetingFetch() {
   const { handleCloseCard } = useRefresh();
@@ -17,7 +18,7 @@ function DeleteMeetingFetch() {
 
     try {
       const response = await axios.delete(
-        `https://reunigo.onrender.com/delete-meeting/${id}?userId=${userId}&role=${role}`
+        `${API}/delete-meeting/${id}?userId=${userId}&role=${role}`
       );
       console.log("Suppression réussie", response.data);
       handleCloseCard();

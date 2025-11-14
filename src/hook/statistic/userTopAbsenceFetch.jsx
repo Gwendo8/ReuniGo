@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { API } from "../../api";
 
 function UserTopAbsenceFetch() {
   const [topAbsence, setTopAbsence] = useState([]);
@@ -9,9 +10,7 @@ function UserTopAbsenceFetch() {
   useEffect(() => {
     const fetchDataTopAbsence = async () => {
       try {
-        const response = await axios.get(
-          "https://reunigo.onrender.com/users-top-absences"
-        );
+        const response = await axios.get(`${API}/users-top-absences`);
         setLoading(false);
         setTopAbsence(response.data);
         console.log(response.data);

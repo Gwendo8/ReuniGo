@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useRefresh } from "../../components/others/refreshInfo";
 import jwtDecode from "jwt-decode";
+import { API } from "../../api";
 
 function UpdateUserFetch(onSuccess) {
   // je récupère la fonction handleCloseCard du composant useRefresh
@@ -26,16 +27,13 @@ function UpdateUserFetch(onSuccess) {
       return;
     }
     try {
-      const response = await axios.put(
-        `https://reunigo.onrender.com/admin-update/${id}`,
-        {
-          firstname,
-          lastname,
-          mail,
-          idrole,
-          password,
-        }
-      );
+      const response = await axios.put(`${API}/admin-update/${id}`, {
+        firstname,
+        lastname,
+        mail,
+        idrole,
+        password,
+      });
       console.log("Modification réussie", response.data);
 
       // je récupère le token actuel stocké dans le localStorage

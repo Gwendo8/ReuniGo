@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API } from "../api";
 
 function RegisterFetch() {
   const navigate = useNavigate();
@@ -21,19 +22,16 @@ function RegisterFetch() {
       return;
     }
     try {
-      const response = await axios.post(
-        "https://reunigo.onrender.com/register",
-        {
-          firstname,
-          lastname,
-          mail,
-          sgid,
-          password,
-          confirmPassword,
-        }
-      );
+      const response = await axios.post(`${API}/register`, {
+        firstname,
+        lastname,
+        mail,
+        sgid,
+        password,
+        confirmPassword,
+      });
       console.log("Connexion réussi", response.data);
-      navigate("/login"); // ✅ redirection
+      navigate("/login");
     } catch (error) {
       if (error.response && error.response.data) {
         if (error.response.status === 400) {

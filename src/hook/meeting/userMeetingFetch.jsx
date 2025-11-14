@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
+import { API } from "../../api";
 
 function UserMeetingFetch(initialMeetingId = null) {
   const [userMeeting, setUserMeeting] = useState([]);
@@ -22,11 +23,9 @@ function UserMeetingFetch(initialMeetingId = null) {
       setLoading(true);
       try {
         console.log("ID de la réunion pour la requête : ", idToFetch);
-        const response = await axios.get(
-          `https://reunigo.onrender.com/users-meeting/${idToFetch}`
-        );
+        const response = await axios.get(`${API}/users-meeting/${idToFetch}`);
         const filesResponse = await axios.get(
-          `https://reunigo.onrender.com/files-meeting/${idToFetch}`
+          `${API}/files-meeting/${idToFetch}`
         );
         setUserMeeting(response.data);
         setFiles(filesResponse.data);
@@ -58,7 +57,7 @@ function UserMeetingFetch(initialMeetingId = null) {
 
     try {
       const response = await axios.patch(
-        `https://reunigo.onrender.com/users-meeting/${currentMeetingId}/${userId}`, // on a l'id de la réunion et l'id du participant dont on veut changer la présence
+        `${API}/users-meeting/${currentMeetingId}/${userId}`, // on a l'id de la réunion et l'id du participant dont on veut changer la présence
         // la j'envoie un objet JSON avec une seule clé et sa valeur qui est un booléen
         // donc ici la présence de l'utilisateur à la réunion
         { is_present: isPresent }

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
+import { API } from "../../api";
 
 function ShowInfosTeamFetch() {
   const [infoTeam, setInfoTeam] = useState([]);
@@ -7,9 +8,7 @@ function ShowInfosTeamFetch() {
 
   const showInfoTeam = async (teamId) => {
     try {
-      const response = await axios.get(
-        `https://reunigo.onrender.com/teams/${teamId}`
-      );
+      const response = await axios.get(`${API}/teams/${teamId}`);
       setInfoTeam(response.data);
       console.log("reponse du click sur une équipe : ", response.data);
     } catch (error) {

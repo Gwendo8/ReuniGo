@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useRefresh } from "../components/others/refreshInfo";
+import { API } from "../api";
 
 // je met un paramètre user
 // pour quand je vais appeler ce hook lui passer les informations de l'utilisateur
@@ -39,15 +40,12 @@ function UpdateProfilUserFetch({ user }) {
     }
     try {
       setLoading(true);
-      const response = await axios.put(
-        `https://reunigo.onrender.com/update-user-info/${id}`,
-        {
-          firstname,
-          lastname,
-          mail,
-          password,
-        }
-      );
+      const response = await axios.put(`${API}/update-user-info/${id}`, {
+        firstname,
+        lastname,
+        mail,
+        password,
+      });
       console.log("Profil utilisateur mis à jour : ", response.data);
       // si la réponse contient un nouveau token, on le stocke dans le localStorage
       // sa c'est pour permettre de mettre à jour les informations de l'utilisateur directement sans devoir se déconnecter

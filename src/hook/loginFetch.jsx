@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios"; // Tu avais oublié d'importer axios
 import { useNavigate } from "react-router-dom";
 import jwtDecode from "jwt-decode"; // ✅ import
+import { API } from "../api";
 
 function LoginFetch() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ function LoginFetch() {
   const handleLogin = async () => {
     console.log("Tentative de connexion avec", sgid, password);
     try {
-      const response = await axios.post("https://reunigo.onrender.com/login", {
+      const response = await axios.post(`${API}/login`, {
         sgid,
         password,
       });

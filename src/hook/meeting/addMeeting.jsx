@@ -3,6 +3,7 @@ import jwtDecode from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRefresh } from "../../components/others/refreshInfo";
+import { API } from "../../api";
 
 function AddMeetingFetch() {
   const navigate = useNavigate();
@@ -20,10 +21,8 @@ function AddMeetingFetch() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const usersRes = await axios.get(
-          "https://reunigo.onrender.com/usersmeeting"
-        );
-        const teamsRes = await axios.get("https://reunigo.onrender.com/teams");
+        const usersRes = await axios.get(`${API}/usersmeeting`);
+        const teamsRes = await axios.get(`${API}/teams`);
 
         const usersData = usersRes.data.map((user) => ({
           ...user,
@@ -94,11 +93,9 @@ function AddMeetingFetch() {
     }
 
     try {
-      const response = await axios.post(
-        "https://reunigo.onrender.com/add-meeting",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const response = await axios.post(`${API}/add-meeting`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       console.log(response.data);
       handleCloseCard();
       if (onSuccess) onSuccess();

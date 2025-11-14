@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRefresh } from "../../components/others/refreshInfo";
 import axios from "axios";
+import { API } from "../../api";
 
 function DeleteTeamFetch() {
   const { handleCloseCard } = useRefresh();
@@ -13,9 +14,7 @@ function DeleteTeamFetch() {
     }
 
     try {
-      const response = await axios.delete(
-        `https://reunigo.onrender.com/delete-team/${id}`
-      );
+      const response = await axios.delete(`${API}/delete-team/${id}`);
       console.log("Suppression réussie", response.data);
       handleCloseCard();
       if (onSuccess) {

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
+import { API } from "../../api";
 
 function ShowTeamFetch() {
   const [teams, setTeams] = useState([]);
@@ -8,7 +9,7 @@ function ShowTeamFetch() {
 
   const showTeams = useCallback(async () => {
     try {
-      const response = await axios.get("https://reunigo.onrender.com/teams");
+      const response = await axios.get(`${API}/teams`);
       setLoading(false);
       setTeams(response.data);
       console.log(response.data);

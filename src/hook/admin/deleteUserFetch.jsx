@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useRefresh } from "../../components/others/refreshInfo";
+import { API } from "../../api";
 
 function DeleteUserFetch() {
   const { handleCloseCard } = useRefresh();
@@ -9,9 +10,7 @@ function DeleteUserFetch() {
 
   const deleteUser = async (sgid, onSucess) => {
     try {
-      const response = await axios.delete(
-        `https://reunigo.onrender.com/admin-delete/${sgid}`
-      );
+      const response = await axios.delete(`${API}/admin-delete/${sgid}`);
       console.log("Suppression réussie", response.data);
       handleCloseCard();
       if (onSucess) {

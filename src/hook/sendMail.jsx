@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
+import { API } from "../api";
 
 function SendMail() {
   const [form, setForm] = useState({
@@ -17,7 +18,7 @@ function SendMail() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://reunigo.onrender.com/send-email", form);
+      await axios.post(`${API}/send-email`, form);
       setSubmitStatus("success");
       setForm({
         name: "",
