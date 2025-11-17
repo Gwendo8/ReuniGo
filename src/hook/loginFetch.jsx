@@ -10,9 +10,12 @@ function LoginFetch() {
   const [sgid, setSgid] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     console.log("Tentative de connexion avec", sgid, password);
+    setLoading(true);
+    setError("");
     try {
       const response = await axios.post(`${API}/login`, {
         sgid,
@@ -51,6 +54,8 @@ function LoginFetch() {
       if (!error.response) {
         setError("Erreur serveur");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,6 +65,7 @@ function LoginFetch() {
     password: password,
     setPassword: setPassword,
     error: error,
+    loading: loading,
     handleLogin: handleLogin,
   };
 }

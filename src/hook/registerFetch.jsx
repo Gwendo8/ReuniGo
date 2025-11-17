@@ -13,6 +13,7 @@ function RegisterFetch() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -21,6 +22,8 @@ function RegisterFetch() {
       );
       return;
     }
+    setLoading(true);
+    setError("");
     try {
       const response = await axios.post(`${API}/register`, {
         firstname,
@@ -44,6 +47,8 @@ function RegisterFetch() {
       } else {
         setError("Erreur serveur");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,6 +66,7 @@ function RegisterFetch() {
     confirmPassword,
     setConfirmPassword,
     error,
+    loading,
     handleRegister,
   };
 }

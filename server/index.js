@@ -32,9 +32,7 @@ app.use(
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: process.env.USE_SSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
 pool.query("SELECT NOW()", (err, res) => {

@@ -22,6 +22,7 @@ function Register() {
     confirmPassword,
     setConfirmPassword,
     error,
+    loading,
     handleRegister,
   } = RegisterFetch();
 
@@ -471,16 +472,21 @@ function Register() {
                     Retour
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: loading ? 1 : 1.03 }}
+                    whileTap={{ scale: loading ? 1 : 0.98 }}
+                    disabled={loading}
                     onClick={handleRegister}
-                    className={`w-2/3 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 ${
+                    className={`w-2/3 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
                       theme === "dark"
                         ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
                         : "bg-gradient-to-r from-[#00ADE1] to-[#17428C] text-white"
-                    }`}
+                    } ${loading && "opacity-70 cursor-not-allowed"}`}
                   >
-                    S'inscrire
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <span>S'inscrire</span>
+                    )}
                   </motion.button>
                 </div>
               </motion.div>
